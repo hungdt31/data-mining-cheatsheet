@@ -1,0 +1,895 @@
+% Data Mining - Chapter 6: Association Rule & Apriori
+\documentclass[10pt]{article}
+\input{../_preamble}
+
+\begin{document}
+\onehalfspacing
+\renewcommand{\arraystretch}{1.5}
+
+% ----- Chapter metadata -----
+\newcommand{\ChapterNum}{6}
+\newcommand{\ChapterTitle}{LUẬT KẾT HỢP VÀ THUẬT TOÁN APRIORI}
+\input{../_title}
+
+% ============================================================
+\section{TỔNG QUAN VỀ KHAI PHÁ LUẬT KẾT HỢP}
+% ============================================================
+
+\subsection{Tình huống ứng dụng}
+
+\textbf{Phân tích giỏ hàng (Basket Analysis):} Xác định các sản phẩm thường được mua cùng nhau trong một giao dịch. Ví dụ: khách hàng mua bia thường mua tã lót cùng lúc vào cuối tuần.
+
+\textbf{Hệ thống gợi ý (Recommendation):} Dựa trên lịch sử mua hàng hoặc hành vi của người dùng tương tự để đề xuất sản phẩm/nội dung phù hợp.
+
+\paragraph{Các ứng dụng khác:}
+\begin{itemize}
+    \item Thiết kế catalog và bố trí hàng hóa trong siêu thị.
+    \item Cross-marketing -- khuyến mãi chéo giữa các sản phẩm.
+    \item Phân loại và phân cụm dựa trên các mẫu phổ biến (frequent patterns).
+    \item Phân tích rủi ro trong tài chính, y tế, an ninh mạng.
+\end{itemize}
+
+\subsection{Quy trình khai phá luật kết hợp}
+
+\begin{enumerate}
+    \item \textbf{Tiền xử lý (Pre-processing):} Làm sạch dữ liệu, chuyển đổi về dạng giao dịch.
+    \item \textbf{Khai phá (Mining):} Tìm các tập phổ biến và sinh luật kết hợp.
+    \item \textbf{Hậu xử lý (Post-processing):} Lọc, đánh giá và trình bày kết quả cho người dùng.
+\end{enumerate}
+
+% ============================================================
+\section{CÁC KHÁI NIỆM CƠ BẢN}
+% ============================================================
+
+\subsection{Định nghĩa nền tảng}
+
+\begin{itemize}
+    \item \textbf{Item (mục):} Một đối tượng quan tâm, ví dụ: một sản phẩm, một từ khóa.
+    \item \textbf{Tập items (Itemset):} Tập hợp gồm một hoặc nhiều item. \textbf{k-itemset} là itemset có đúng $k$ item.
+    \item \textbf{$J = \{I_1, I_2, \ldots, I_m\}$:} Tập tất cả $m$ item trong tập dữ liệu.
+    \item \textbf{Giao dịch (Transaction):} Một bản ghi trong tập dữ liệu giao dịch; là một tập các item thuộc cùng một giao dịch. Mỗi giao dịch $T$ thỏa $T \subseteq J$.
+    \item \textbf{Tập dữ liệu giao dịch $D$:} Tập hợp tất cả các giao dịch.
+\end{itemize}
+
+\subsection{Kết hợp và luật kết hợp}
+
+\begin{itemize}
+    \item \textbf{Kết hợp (Association):} Sự xuất hiện đồng thời của các item trong cùng một giao dịch.
+    \item \textbf{Luật kết hợp (Association rule):} $A \Rightarrow B$, với $A$ và $B$ là các itemset ($A \cap B = \emptyset$), biểu diễn rằng khi $A$ xuất hiện thì $B$ có xu hướng xuất hiện.
+\end{itemize}
+
+\subsection{Support (Độ phổ biến)}
+
+\textbf{Support} đo lường tần suất xuất hiện của một itemset trong tập dữ liệu:
+\[
+\text{support}(A) = \frac{|\{T \in D \mid A \subseteq T\}|}{|D|}
+\]
+
+Với luật $A \Rightarrow B$:
+\[
+\text{support}(A \Rightarrow B) = \text{support}(A \cup B) = \frac{|\{T \in D \mid A \cup B \subseteq T\}|}{|D|}
+\]
+
+\textbf{Ngưỡng support tối thiểu (MinSup):} giá trị support tối thiểu do người dùng định nghĩa để xác định tập phổ biến.
+
+\subsection{Confidence (Độ tin cậy)}
+
+\textbf{Confidence} đo lường xác suất có điều kiện -- tần suất $B$ xuất hiện khi $A$ đã xuất hiện:
+\[
+\text{confidence}(A \Rightarrow B) = P(B \mid A) = \frac{\text{support}(A \cup B)}{\text{support}(A)}
+\]
+
+\textbf{Ngưỡng confidence tối thiểu (MinConf):} giá trị confidence tối thiểu do người dùng định nghĩa.
+
+\subsection{Tập phổ biến và luật kết hợp mạnh}
+
+\begin{itemize}
+    \item \textbf{Tập phổ biến (Frequent itemset):} Itemset $A$ thỏa $\text{support}(A) \geq \text{MinSup}$.
+    \item \textbf{Luật kết hợp mạnh (Strong association rule):} Luật $A \Rightarrow B$ thỏa đồng thời:
+    \[
+    \text{support}(A \Rightarrow B) \geq \text{MinSup} \quad \text{và} \quad \text{confidence}(A \Rightarrow B) \geq \text{MinConf}
+    \]
+\end{itemize}
+
+\subsection{Ví dụ minh họa}
+
+Xét tập dữ liệu 9 giao dịch, với các item $\{I1, I2, I3, I4, I5\}$. Nếu $\text{MinSup} = 2/9$ và itemset $\{I1, I2\}$ xuất hiện trong 4 giao dịch:
+\[
+\text{support}(\{I1,I2\}) = \frac{4}{9} \approx 44\% \geq \text{MinSup}
+\]
+Luật $I1 \Rightarrow I2$ có confidence:
+\[
+\text{confidence}(I1 \Rightarrow I2) = \frac{\text{support}(\{I1,I2\})}{\text{support}(\{I1\})} = \frac{4/9}{6/9} = \frac{4}{6} \approx 66.7\%
+\]
+
+% ============================================================
+\section{PHÂN LOẠI LUẬT KẾT HỢP}
+% ============================================================
+
+\begin{itemize}
+    \item \textbf{Boolean vs. Quantitative:}
+    \begin{itemize}
+        \item \textbf{Boolean:} Biểu diễn sự xuất hiện/vắng mặt của item. Ví dụ: \textit{Computer $\Rightarrow$ Financial\_SW} [sup=50\%, conf=60\%].
+        \item \textbf{Quantitative:} Liên quan đến các thuộc tính định lượng. Ví dụ: \textit{Age(X,"30..39") $\Rightarrow$ Buys(X, "TV")} [sup=50\%, conf=60\%].
+    \end{itemize}
+    \item \textbf{Single-dimensional vs. Multidimensional:}
+    \begin{itemize}
+        \item \textbf{Single-dimensional:} Chỉ liên quan đến một chiều dữ liệu (ví dụ: \textit{buys}).
+        \item \textbf{Multidimensional:} Liên quan đến nhiều chiều (ví dụ: \textit{age, income, buys}).
+    \end{itemize}
+    \item \textbf{Single-level vs. Multilevel:}
+    \begin{itemize}
+        \item \textbf{Single-level:} Tất cả item ở cùng mức trừu tượng.
+        \item \textbf{Multilevel:} Item ở nhiều mức trừu tượng khác nhau (ví dụ: \textit{laptop} và \textit{computer} là hai mức của cùng một khái niệm).
+    \end{itemize}
+    \item \textbf{Association rule vs. Correlation rule:} Luật kết hợp chỉ dựa trên support/confidence; luật tương quan bổ sung thêm các độ đo thống kê (lift, $\chi^2$, \ldots).
+\end{itemize}
+
+% ============================================================
+\section{BIỂU DIỄN LUẬT KẾT HỢP}
+% ============================================================
+
+Dạng chuẩn của luật kết hợp:
+\[
+A \Rightarrow B \quad [\text{support} = s\%, \; \text{confidence} = c\%]
+\]
+trong đó:
+\begin{itemize}
+    \item $A, B$ là các tập phổ biến (frequent itemsets), $A \cap B = \emptyset$.
+    \item $\text{support}(A \Rightarrow B) = \text{support}(A \cup B) \geq \text{MinSup}$.
+    \item $\text{confidence}(A \Rightarrow B) = \dfrac{\text{support}(A \cup B)}{\text{support}(A)} \geq \text{MinConf}$.
+\end{itemize}
+
+% ============================================================
+\section{KHAI PHÁ TẬP PHỔ BIẾN -- HAI BƯỚC}
+% ============================================================
+
+Khai phá luật kết hợp gồm \textbf{hai bước} chính:
+\begin{enumerate}
+    \item \textbf{Bước 1 -- Tìm tập phổ biến:} Tìm tất cả itemset có support $\geq$ MinSup. Đây là bước tốn kém nhất về tính toán.
+    \item \textbf{Bước 2 -- Sinh luật kết hợp:} Từ mỗi tập phổ biến $L$, sinh tất cả các luật $A \Rightarrow (L \setminus A)$ thỏa MinConf.
+\end{enumerate}
+
+% ============================================================
+\section{THUẬT TOÁN APRIORI}
+% ============================================================
+
+\subsection{Ý tưởng và tính chất Apriori}
+
+\textbf{Apriori} (Agrawal \& Srikant, VLDB 1994) khai phá tập phổ biến bằng cách tận dụng \textbf{tính chất Apriori (Apriori property)}:
+
+\begin{center}
+\textit{``Mọi tập con của một tập phổ biến đều là tập phổ biến."}
+\end{center}
+
+\textbf{Hệ quả (Anti-monotone property):} Nếu $X$ \textbf{không} phải tập phổ biến thì $X \cup Y$ (với $Y$ bất kỳ) cũng \textbf{không} phải tập phổ biến. Tính chất này cho phép cắt tỉa không gian tìm kiếm hiệu quả.
+
+\subsection{Pseudo-code của Apriori}
+
+\begin{singlespace}
+\begin{verbatim}
+Ck: tập ứng viên k-itemset
+Lk: tập phổ biến k-itemset
+
+L1 = {frequent 1-itemsets};
+k = 1;
+while (Lk != empty) {
+    k++;
+    Ck = apriori_gen(Lk-1);      // sinh ứng viên từ Lk-1
+    for each transaction t in D {
+        Ct = subset(Ck, t);       // ứng viên chứa trong t
+        for each candidate c in Ct
+            c.count++;            // tăng bộ đếm
+    }
+    Lk = {c in Ck | c.count >= min_sup_count};
+}
+return Union(Lk);
+\end{verbatim}
+\end{singlespace}
+
+\subsection{Sinh tập ứng viên (apriori\_gen)}
+
+Gồm hai bước:
+
+\textbf{Bước 1 -- Self-joining (tự nối):} Từ $L_{k-1}$, nối hai itemset có $k-2$ item đầu giống nhau:
+\begin{singlespace}
+\begin{verbatim}
+INSERT INTO Ck
+SELECT p.item1, ..., p.itemk-1, q.itemk-1
+FROM   Lk-1 p, Lk-1 q
+WHERE  p.item1=q.item1, ..., p.itemk-2=q.itemk-2,
+       p.itemk-1 < q.itemk-1
+\end{verbatim}
+\end{singlespace}
+
+\textbf{Bước 2 -- Pruning (cắt tỉa):} Loại bỏ ứng viên $c \in C_k$ nếu bất kỳ $(k-1)$-subset nào của $c$ không có trong $L_{k-1}$.
+
+\subsection{Ví dụ minh họa Apriori}
+
+Tập dữ liệu $D$ gồm 4 giao dịch, MinSup = 2:
+
+\begin{singlespace}
+\begin{longtable}{|c|l|}
+\hline
+\textbf{TID} & \textbf{Items} \\
+\hline
+\endhead
+100 & 1, 3, 4 \\
+\hline
+200 & 2, 3, 5 \\
+\hline
+300 & 1, 2, 3, 5 \\
+\hline
+400 & 2, 5 \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\textbf{Vòng lặp 1:} $C_1 = \{\{1\},\{2\},\{3\},\{4\},\{5\}\}$. Sau khi quét $D$: $L_1 = \{\{1\}^2, \{2\}^3, \{3\}^3, \{5\}^3\}$ (loại $\{4\}$ vì sup=1 < 2).
+
+\textbf{Vòng lặp 2:} Tự nối $L_1$ sinh $C_2$. Sau khi quét: $L_2 = \{\{1,3\}^2, \{2,3\}^2, \{2,5\}^3, \{3,5\}^2\}$.
+
+\textbf{Vòng lặp 3:} Sinh $C_3 = \{\{2,3,5\}\}$ (các ứng viên khác bị cắt tỉa). Sau quét: $L_3 = \{\{2,3,5\}^2\}$.
+
+\textbf{Vòng lặp 4:} $C_4 = \emptyset \Rightarrow$ dừng.
+
+\subsection{Đặc điểm và hạn chế của Apriori}
+
+\begin{itemize}
+    \item \textbf{Ưu điểm:} Dễ hiểu, tận dụng tính chất Apriori để cắt tỉa không gian tìm kiếm.
+    \item \textbf{Hạn chế:}
+    \begin{itemize}
+        \item Quét toàn bộ tập dữ liệu nhiều lần (mỗi cấp độ $k$ quét một lần).
+        \item Sinh ra số lượng lớn tập ứng viên, tốn bộ nhớ.
+        \item Không hiệu quả với tập dữ liệu lớn hoặc MinSup thấp.
+    \end{itemize}
+\end{itemize}
+
+% ============================================================
+\section{THUẬT TOÁN FP-GROWTH}
+% ============================================================
+
+\textbf{FP-Growth} (Han, Pei, Yin -- SIGMOD 2000) khai phá tập phổ biến \textbf{không sinh tập ứng viên}, sử dụng cấu trúc \textbf{FP-tree (Frequent Pattern tree)}.
+
+\textbf{Ý tưởng chính:}
+\begin{enumerate}
+    \item \textbf{Xây dựng FP-tree:} Nén tập dữ liệu vào một cây tiền tố (prefix tree). Chỉ cần quét dữ liệu \textbf{2 lần}.
+    \item \textbf{Khai phá FP-tree:} Phân tích từng nhánh của cây theo phương pháp ``divide and conquer'' để tìm tập phổ biến mà không sinh ứng viên.
+\end{enumerate}
+
+\textbf{Ưu điểm so với Apriori:}
+\begin{itemize}
+    \item Không sinh tập ứng viên $\Rightarrow$ giảm đáng kể bộ nhớ.
+    \item Chỉ quét dữ liệu 2 lần $\Rightarrow$ hiệu quả hơn với tập dữ liệu lớn.
+    \item Hiệu quả với MinSup thấp.
+\end{itemize}
+
+% ============================================================
+\section{KHAI PHÁ LUẬT KẾT HỢP TỪ TẬP PHỔ BIẾN}
+% ============================================================
+
+Từ mỗi tập phổ biến $L$ (với $|L| \geq 2$), sinh tất cả các luật $A \Rightarrow (L \setminus A)$ ($A \neq \emptyset$) và giữ lại những luật thỏa MinConf.
+
+\textbf{Tính chất đơn điệu của confidence:} Với luật $A \Rightarrow (L \setminus A)$, nếu luật không thỏa MinConf thì bất kỳ luật nào có vế trái là tập con của $A$ cũng không thỏa. Tính chất này cho phép cắt tỉa bước sinh luật.
+
+\textbf{Ví dụ:} Từ $L_3 = \{2, 3, 5\}$ (sup = 2), sinh các luật:
+\begin{itemize}
+    \item $\{2,3\} \Rightarrow \{5\}$: conf = $2/2 = 100\%$
+    \item $\{2,5\} \Rightarrow \{3\}$: conf = $2/3 = 66.7\%$
+    \item $\{3,5\} \Rightarrow \{2\}$: conf = $2/2 = 100\%$
+    \item $\{2\} \Rightarrow \{3,5\}$: conf = $2/3 = 66.7\%$
+    \item $\{3\} \Rightarrow \{2,5\}$: conf = $2/3 = 66.7\%$
+    \item $\{5\} \Rightarrow \{2,3\}$: conf = $2/3 = 66.7\%$
+\end{itemize}
+
+% ============================================================
+\section{KHAI PHÁ CÓ RÀNG BUỘC (CONSTRAINT-BASED MINING)}
+% ============================================================
+
+Trong thực tế, người dùng chỉ quan tâm đến một tập con các luật thỏa mãn điều kiện cụ thể. Các loại ràng buộc:
+
+\begin{itemize}
+    \item \textbf{Knowledge type constraint:} Chỉ khai phá loại luật nhất định (ví dụ: chỉ luật Boolean).
+    \item \textbf{Data constraint:} Giới hạn trên tập item cụ thể (ví dụ: chỉ sản phẩm điện tử).
+    \item \textbf{Dimension/level constraint:} Giới hạn chiều dữ liệu hoặc mức trừu tượng.
+    \item \textbf{Rule constraint:} Ràng buộc trực tiếp trên cấu trúc luật (ví dụ: vế trái chứa ít nhất 2 item).
+    \item \textbf{Interestingness constraint:} Ràng buộc trên support, confidence hoặc các độ đo khác.
+\end{itemize}
+
+Ràng buộc \textbf{anti-monotone} (như support) có thể dùng để cắt tỉa sớm trong quá trình khai phá.
+
+% ============================================================
+\section{PHÂN TÍCH TƯƠNG QUAN (CORRELATION ANALYSIS)}
+% ============================================================
+
+Luật kết hợp mạnh (thỏa MinSup và MinConf) chưa chắc đã biểu diễn quan hệ nhân quả hoặc tương quan thực sự. Cần bổ sung thêm các độ đo tương quan:
+
+\subsection{Lift (Độ nâng)}
+
+\[
+\text{lift}(A \Rightarrow B) = \frac{\text{confidence}(A \Rightarrow B)}{\text{support}(B)} = \frac{\text{support}(A \cup B)}{\text{support}(A) \cdot \text{support}(B)}
+\]
+
+\begin{itemize}
+    \item $\text{lift} > 1$: $A$ và $B$ \textbf{tương quan thuận} (positively correlated).
+    \item $\text{lift} = 1$: $A$ và $B$ \textbf{độc lập} (independent).
+    \item $\text{lift} < 1$: $A$ và $B$ \textbf{tương quan nghịch} (negatively correlated).
+\end{itemize}
+
+\subsection{Độ đo $\chi^2$ (Chi-square)}
+
+\[
+\chi^2 = \sum \frac{(O - E)^2}{E}
+\]
+trong đó $O$ là tần suất quan sát, $E$ là tần suất kỳ vọng. Nếu $\chi^2 = 0$: hai item độc lập; $\chi^2 > 0$: có tương quan.
+
+\subsection{Cosine similarity}
+
+\[
+\text{cosine}(A, B) = \frac{\text{support}(A \cup B)}{\sqrt{\text{support}(A) \cdot \text{support}(B)}}
+\]
+
+% ============================================================
+\section{TÓM TẮT}
+% ============================================================
+
+\begin{itemize}
+    \item \textbf{Luật kết hợp} $A \Rightarrow B$ được đặc trưng bởi support và confidence.
+    \item \textbf{Khai phá} gồm 2 bước: (1) tìm tập phổ biến; (2) sinh luật từ tập phổ biến.
+    \item \textbf{Apriori:} Khai phá tập phổ biến dựa trên tính chất anti-monotone; quét dữ liệu nhiều lần.
+    \item \textbf{FP-Growth:} Không sinh ứng viên, chỉ quét dữ liệu 2 lần; hiệu quả hơn Apriori.
+    \item \textbf{Luật kết hợp mạnh} chưa đủ; cần bổ sung \textbf{lift, $\chi^2$} để đánh giá tương quan thực sự.
+    \item \textbf{Ràng buộc} giúp người dùng tập trung vào các luật có ý nghĩa thực tiễn.
+\end{itemize}
+
+% ============================================================
+\newpage
+\section{CÂU HỎI TỰ LUẬN}
+% ============================================================
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Câu \arabic*.}]
+
+    \item Khai phá luật kết hợp (association rule mining) là gì? Trình bày quy trình 3 bước của khai phá luật kết hợp và cho ví dụ ứng dụng trong thực tiễn.
+
+    \item Giải thích các khái niệm: \textbf{item, itemset, k-itemset, transaction, tập dữ liệu giao dịch}. Cho ví dụ minh họa với một tập dữ liệu giao dịch cụ thể.
+
+    \item Định nghĩa \textbf{support} và \textbf{confidence} của một luật kết hợp $A \Rightarrow B$. Viết công thức và giải thích ý nghĩa của từng độ đo.
+
+    \item \textbf{Tập phổ biến (frequent itemset)} và \textbf{luật kết hợp mạnh (strong association rule)} được định nghĩa như thế nào? Tại sao cần cả hai điều kiện MinSup và MinConf?
+
+    \item Trình bày \textbf{tính chất Apriori (Apriori property)} và \textbf{tính anti-monotone}. Tính chất này được sử dụng như thế nào để giảm không gian tìm kiếm trong thuật toán Apriori?
+
+    \item Mô tả chi tiết các bước của \textbf{thuật toán Apriori}. Giải thích bước sinh tập ứng viên (apriori\_gen) bao gồm self-joining và pruning. Minh họa bằng ví dụ.
+
+    \item Với tập dữ liệu $D$ gồm các giao dịch: T1=\{A,B,C\}, T2=\{A,C\}, T3=\{A,D\}, T4=\{B,E,F\}, T5=\{A,B,C\}. Với MinSup = 2, hãy thực hiện vòng lặp đầu tiên của Apriori: tìm $C_1$ và $L_1$.
+
+    \item So sánh \textbf{Apriori} và \textbf{FP-Growth} về: số lần quét dữ liệu, việc sinh tập ứng viên, bộ nhớ sử dụng và hiệu quả khi MinSup thấp.
+
+    \item \textbf{FP-tree} là gì? Trình bày ý tưởng xây dựng FP-tree và cách FP-Growth khai phá tập phổ biến từ FP-tree mà không sinh tập ứng viên.
+
+    \item Từ một tập phổ biến $L = \{A, B, C\}$, hãy liệt kê tất cả các luật kết hợp có thể sinh ra. Giải thích cách áp dụng MinConf để lọc các luật không đủ điều kiện.
+
+    \item Phân biệt \textbf{luật kết hợp Boolean} và \textbf{luật kết hợp định lượng (quantitative)}. Cho ví dụ cụ thể cho mỗi loại.
+
+    \item Giải thích sự khác biệt giữa \textbf{luật kết hợp đơn chiều (single-dimensional)} và \textbf{đa chiều (multidimensional)}. Luật đa chiều hữu ích trong tình huống nào?
+
+    \item \textbf{Luật kết hợp đa mức (multilevel association rule)} khác với luật đơn mức như thế nào? Ưu điểm của khai phá đa mức là gì? Thách thức nào phát sinh khi khai phá đa mức?
+
+    \item Trình bày các loại ràng buộc (constraints) trong khai phá luật kết hợp dựa trên ràng buộc. Ràng buộc \textbf{anti-monotone} khác với ràng buộc thông thường như thế nào?
+
+    \item \textbf{Lift} được định nghĩa như thế nào? Giải thích ý nghĩa của lift $> 1$, lift $= 1$ và lift $< 1$. Tại sao lift quan trọng hơn chỉ dùng confidence?
+
+    \item Một luật kết hợp mạnh (thỏa MinSup và MinConf) có thể \textbf{không có ý nghĩa thực sự} không? Giải thích bằng ví dụ cụ thể và nêu cách khắc phục dùng lift hoặc $\chi^2$.
+
+    \item Trình bày độ đo $\chi^2$ (chi-square) trong phân tích tương quan. Khi nào $\chi^2 = 0$ và điều đó có nghĩa gì?
+
+    \item Giải thích \textbf{cosine similarity} trong đánh giá luật kết hợp. So sánh cosine similarity với lift về ưu và nhược điểm.
+
+    \item Nêu và phân tích \textbf{các hạn chế của thuật toán Apriori}. Đề xuất ít nhất hai hướng cải tiến Apriori để tăng hiệu quả.
+
+    \item Khai phá luật kết hợp gồm \textbf{hai bước}: tìm tập phổ biến và sinh luật. Tại sao bước tìm tập phổ biến được coi là bước \textbf{tốn kém nhất}? Phân tích độ phức tạp tính toán của bước này.
+
+\end{enumerate}
+
+% ============================================================
+\newpage
+\section{CÂU HỎI TRẮC NGHIỆM}
+% ============================================================
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Câu \arabic*.}]
+
+    % --- TỔNG QUAN ---
+    \item Khai phá luật kết hợp thuộc loại bài toán nào trong khai phá dữ liệu?
+    \begin{enumerate}[label=\Alph*.]
+        \item Học có giám sát (supervised learning).
+        \item Học không giám sát (unsupervised learning).
+        \item Học bán giám sát (semi-supervised learning).
+        \item Học tăng cường (reinforcement learning).
+    \end{enumerate}
+
+    \item Phân tích giỏ hàng (basket analysis) trong khai phá luật kết hợp nhằm mục đích:
+    \begin{enumerate}[label=\Alph*.]
+        \item Phân nhóm khách hàng theo hành vi mua hàng.
+        \item Phát hiện các sản phẩm thường được mua cùng nhau trong một giao dịch.
+        \item Dự đoán giá sản phẩm trong tương lai.
+        \item Phân loại khách hàng theo thu nhập.
+    \end{enumerate}
+
+    \item Một \textbf{k-itemset} là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Một giao dịch chứa đúng $k$ item.
+        \item Một tập hợp gồm đúng $k$ item.
+        \item Một luật có $k$ item ở vế trái.
+        \item Một tập phổ biến xuất hiện ít nhất $k$ lần.
+    \end{enumerate}
+
+    % --- SUPPORT & CONFIDENCE ---
+    \item Support của luật $A \Rightarrow B$ được tính bằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item $P(A \mid B)$
+        \item $P(A \cup B)$
+        \item $P(B \mid A)$
+        \item $P(A) \cdot P(B)$
+    \end{enumerate}
+
+    \item Confidence của luật $A \Rightarrow B$ được tính bằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item $\dfrac{\text{support}(A \cup B)}{\text{support}(A)}$
+        \item $\dfrac{\text{support}(A)}{\text{support}(B)}$
+        \item $\dfrac{\text{support}(A \cup B)}{|D|}$
+        \item $\text{support}(A) + \text{support}(B)$
+    \end{enumerate}
+
+    \item Một itemset được gọi là \textbf{tập phổ biến (frequent itemset)} khi:
+    \begin{enumerate}[label=\Alph*.]
+        \item support $\geq$ MinConf.
+        \item confidence $\geq$ MinSup.
+        \item support $\geq$ MinSup.
+        \item lift $\geq 1$.
+    \end{enumerate}
+
+    \item Một luật $A \Rightarrow B$ được gọi là \textbf{luật kết hợp mạnh} khi:
+    \begin{enumerate}[label=\Alph*.]
+        \item support $\geq$ MinSup hoặc confidence $\geq$ MinConf.
+        \item support $\geq$ MinSup và confidence $\geq$ MinConf.
+        \item lift $> 1$ và confidence $\geq$ MinConf.
+        \item support $\geq$ MinSup và lift $> 1$.
+    \end{enumerate}
+
+    \item Nếu support($\{A,B\}$) = 0.4 và support($\{A\}$) = 0.5, thì confidence($A \Rightarrow B$) bằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item 0.2
+        \item 0.4
+        \item 0.8
+        \item 0.9
+    \end{enumerate}
+
+    % --- APRIORI PROPERTY ---
+    \item \textbf{Tính chất Apriori (Apriori property)} phát biểu rằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item Mọi superset của tập phổ biến đều là tập phổ biến.
+        \item Mọi tập con của tập phổ biến đều là tập phổ biến.
+        \item Mọi tập con của tập phổ biến đều không phổ biến.
+        \item Chỉ itemset có đúng 1 phần tử mới là tập phổ biến.
+    \end{enumerate}
+
+    \item \textbf{Tính anti-monotone} của Apriori nói rằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item Nếu $X$ phổ biến thì $X \cup Y$ cũng phổ biến.
+        \item Nếu $X$ không phổ biến thì $X \cup Y$ cũng không phổ biến.
+        \item Support tăng khi kích thước itemset tăng.
+        \item Confidence không thể giảm khi thêm item vào vế trái.
+    \end{enumerate}
+
+    % --- APRIORI ALGORITHM ---
+    \item Bước \textbf{self-joining} trong sinh tập ứng viên $C_k$ từ $L_{k-1}$ thực hiện:
+    \begin{enumerate}[label=\Alph*.]
+        \item Loại bỏ ứng viên có subset không phổ biến.
+        \item Nối hai itemset trong $L_{k-1}$ có $k-2$ item đầu giống nhau.
+        \item Đếm support của tất cả ứng viên trong $C_k$.
+        \item Lọc ứng viên có support $<$ MinSup.
+    \end{enumerate}
+
+    \item Bước \textbf{pruning} trong sinh tập ứng viên $C_k$ thực hiện:
+    \begin{enumerate}[label=\Alph*.]
+        \item Nối các itemset trong $L_{k-1}$.
+        \item Đếm support của từng ứng viên.
+        \item Loại bỏ ứng viên $c \in C_k$ nếu có $(k-1)$-subset của $c$ không thuộc $L_{k-1}$.
+        \item Sinh ra tất cả $(k+1)$-itemset từ $C_k$.
+    \end{enumerate}
+
+    \item Độ phức tạp của Apriori liên quan đến số lần quét tập dữ liệu là:
+    \begin{enumerate}[label=\Alph*.]
+        \item 1 lần (một lần quét duy nhất).
+        \item 2 lần.
+        \item Bằng độ dài tập phổ biến dài nhất ($k_{\max}$ lần).
+        \item $n$ lần với $n$ là số giao dịch.
+    \end{enumerate}
+
+    \item Với $L_3 = \{abc, abd, acd, ace, bcd\}$, sau bước self-joining, tập ứng viên $C_4$ ban đầu (trước pruning) gồm:
+    \begin{enumerate}[label=\Alph*.]
+        \item $\{abcd\}$
+        \item $\{abcd, acde\}$
+        \item $\{abcd, abce, abde\}$
+        \item $\{abcde\}$
+    \end{enumerate}
+
+    \item Sau bước pruning trên $C_4 = \{abcd, acde\}$ (với $L_3$ như câu 14), kết quả là:
+    \begin{enumerate}[label=\Alph*.]
+        \item $C_4 = \{abcd, acde\}$ (không đổi).
+        \item $C_4 = \{abcd\}$ vì $acde$ bị loại do $ade \notin L_3$.
+        \item $C_4 = \emptyset$ vì cả hai đều bị loại.
+        \item $C_4 = \{acde\}$ vì $abcd$ bị loại.
+    \end{enumerate}
+
+    % --- FP-GROWTH ---
+    \item FP-Growth khác Apriori ở điểm quan trọng nào?
+    \begin{enumerate}[label=\Alph*.]
+        \item FP-Growth cần xác định số cụm $k$ trước.
+        \item FP-Growth không sinh tập ứng viên và chỉ quét dữ liệu 2 lần.
+        \item FP-Growth chỉ hoạt động với dữ liệu nhị phân.
+        \item FP-Growth cần MinConf nhưng không cần MinSup.
+    \end{enumerate}
+
+    \item FP-tree (Frequent Pattern tree) được sử dụng trong FP-Growth để:
+    \begin{enumerate}[label=\Alph*.]
+        \item Lưu trữ danh sách tất cả tập ứng viên.
+        \item Nén tập dữ liệu vào cấu trúc cây tiền tố, tránh sinh ứng viên.
+        \item Biểu diễn dendrogram trong phân cụm.
+        \item Tính toán confidence nhanh hơn.
+    \end{enumerate}
+
+    % --- SINH LUẬT ---
+    \item Từ tập phổ biến $L = \{A, B, C\}$ (sup = 3), support($\{A,B\}$) = 3. Confidence($\{A,B\} \Rightarrow \{C\}$) bằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item $3/9 = 33\%$
+        \item $3/3 = 100\%$
+        \item $3/5 = 60\%$
+        \item Không tính được từ thông tin đã cho.
+    \end{enumerate}
+
+    \item Khi sinh luật từ tập phổ biến, \textbf{tính đơn điệu của confidence} cho phép:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tính confidence mà không cần quét dữ liệu thêm.
+        \item Cắt tỉa các luật có vế trái là tập cha của một luật không đủ MinConf.
+        \item Tự động xác định giá trị MinConf tối ưu.
+        \item Đảm bảo mọi luật sinh ra đều thỏa MinConf.
+    \end{enumerate}
+
+    % --- PHÂN LOẠI LUẬT ---
+    \item Luật ``\textit{Age(X, ``30..39'') $\Rightarrow$ Buys(X, ``TV'')}'' thuộc loại:
+    \begin{enumerate}[label=\Alph*.]
+        \item Luật kết hợp Boolean đơn chiều.
+        \item Luật kết hợp định lượng đa chiều.
+        \item Luật kết hợp Boolean đa mức.
+        \item Luật kết hợp tương quan.
+    \end{enumerate}
+
+    \item Luật kết hợp \textbf{đa mức (multilevel)} có đặc điểm:
+    \begin{enumerate}[label=\Alph*.]
+        \item Chỉ liên quan đến một chiều dữ liệu.
+        \item Liên quan đến item ở nhiều mức trừu tượng khác nhau.
+        \item Chỉ áp dụng với dữ liệu định lượng.
+        \item Không cần MinSup để khai phá.
+    \end{enumerate}
+
+    % --- CONSTRAINT-BASED ---
+    \item Ràng buộc \textbf{anti-monotone} trong khai phá có ràng buộc có nghĩa là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Ràng buộc làm tăng số lượng luật tìm thấy.
+        \item Nếu một itemset vi phạm ràng buộc thì superset của nó cũng vi phạm, cho phép cắt tỉa sớm.
+        \item Ràng buộc chỉ áp dụng cho vế phải của luật.
+        \item Ràng buộc không ảnh hưởng đến hiệu quả khai phá.
+    \end{enumerate}
+
+    % --- CORRELATION ---
+    \item \textbf{Lift} của luật $A \Rightarrow B$ được tính bằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item $\dfrac{\text{support}(A \cup B)}{\text{support}(A) \cdot \text{support}(B)}$
+        \item $\dfrac{\text{confidence}(A \Rightarrow B)}{\text{support}(A)}$
+        \item $\text{support}(A \cup B) - \text{support}(A) \cdot \text{support}(B)$
+        \item $\dfrac{\text{support}(A)}{\text{support}(B)}$
+    \end{enumerate}
+
+    \item Nếu lift$(A \Rightarrow B) = 1$ thì:
+    \begin{enumerate}[label=\Alph*.]
+        \item $A$ và $B$ tương quan thuận.
+        \item $A$ và $B$ tương quan nghịch.
+        \item $A$ và $B$ độc lập với nhau.
+        \item Luật $A \Rightarrow B$ không phải luật mạnh.
+    \end{enumerate}
+
+    \item Nếu lift$(A \Rightarrow B) < 1$ thì:
+    \begin{enumerate}[label=\Alph*.]
+        \item $A$ và $B$ tương quan thuận.
+        \item $A$ và $B$ tương quan nghịch.
+        \item $A$ và $B$ độc lập.
+        \item Confidence của luật bằng 0.
+    \end{enumerate}
+
+    \item Độ đo $\chi^2 = 0$ trong phân tích tương quan có nghĩa là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Hai item hoàn toàn phụ thuộc nhau.
+        \item Hai item hoàn toàn độc lập với nhau.
+        \item Support của cả hai item bằng 0.
+        \item Luật không thỏa MinConf.
+    \end{enumerate}
+
+    \item Lý do chính cần bổ sung \textbf{lift} hoặc $\chi^2$ bên cạnh support và confidence là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Để tính toán nhanh hơn.
+        \item Luật kết hợp mạnh có thể biểu diễn quan hệ \textbf{không có ý nghĩa thực} hoặc tương quan nghịch.
+        \item Để giảm số lượng tập ứng viên.
+        \item Để tự động chọn MinSup và MinConf tối ưu.
+    \end{enumerate}
+
+    % --- MISC ---
+    \item Trong Apriori, $C_k$ ký hiệu cho:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tập phổ biến k-itemset.
+        \item Tập ứng viên k-itemset.
+        \item Tập giao dịch có độ dài $k$.
+        \item Số lần quét dữ liệu thứ $k$.
+    \end{enumerate}
+
+    \item Trong Apriori, $L_k$ ký hiệu cho:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tập ứng viên k-itemset.
+        \item Tập phổ biến k-itemset (sau khi lọc theo MinSup).
+        \item Tập giao dịch có ít nhất $k$ item.
+        \item Tập luật kết hợp có vế trái là k-itemset.
+    \end{enumerate}
+
+    \item Khai phá luật kết hợp gồm hai bước; bước nào tốn kém nhất về tính toán?
+    \begin{enumerate}[label=\Alph*.]
+        \item Bước 2: sinh luật từ tập phổ biến.
+        \item Bước 1: tìm tất cả tập phổ biến.
+        \item Cả hai bước có độ phức tạp như nhau.
+        \item Bước tiền xử lý dữ liệu.
+    \end{enumerate}
+
+    \item MinSup càng \textbf{thấp} thì:
+    \begin{enumerate}[label=\Alph*.]
+        \item Số tập phổ biến càng ít.
+        \item Số tập phổ biến càng nhiều, tính toán càng tốn kém.
+        \item Thuật toán Apriori càng nhanh.
+        \item Không ảnh hưởng đến số tập phổ biến.
+    \end{enumerate}
+
+    \item Với tập dữ liệu $D$ (4 giao dịch), MinSup = 2. Item \{4\} xuất hiện trong 1 giao dịch. Item \{4\} có phải tập phổ biến không?
+    \begin{enumerate}[label=\Alph*.]
+        \item Có, vì support = 1/4 > 0.
+        \item Không, vì support = 1 < MinSup = 2 (tính theo count).
+        \item Có, nếu confidence $\geq$ MinConf.
+        \item Không đủ thông tin để kết luận.
+    \end{enumerate}
+
+    \item Giả sử $\{A, B\}$ không phổ biến. Theo tính chất anti-monotone, $\{A, B, C\}$:
+    \begin{enumerate}[label=\Alph*.]
+        \item Có thể phổ biến hoặc không.
+        \item Chắc chắn phổ biến vì có thêm item $C$.
+        \item Chắc chắn không phổ biến.
+        \item Phổ biến nếu $\{C\}$ phổ biến.
+    \end{enumerate}
+
+    \item Số lượng luật có thể sinh ra từ tập phổ biến $L$ có $n$ item là:
+    \begin{enumerate}[label=\Alph*.]
+        \item $n$
+        \item $2^n - 2$
+        \item $n^2$
+        \item $n!$
+    \end{enumerate}
+
+    \item Cosine similarity trong đánh giá luật kết hợp được tính bằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item $\dfrac{\text{support}(A \cup B)}{\text{support}(A) + \text{support}(B)}$
+        \item $\dfrac{\text{support}(A \cup B)}{\sqrt{\text{support}(A) \cdot \text{support}(B)}}$
+        \item $\dfrac{\text{confidence}(A \Rightarrow B)}{\text{confidence}(B \Rightarrow A)}$
+        \item $\sqrt{\text{support}(A) \cdot \text{support}(B)}$
+    \end{enumerate}
+
+    \item Trong khai phá luật kết hợp dựa trên ràng buộc, ràng buộc nào sau đây là \textbf{anti-monotone}?
+    \begin{enumerate}[label=\Alph*.]
+        \item Luật phải có ít nhất 3 item ở vế trái (min-constraint).
+        \item Tổng giá trị item $\leq$ 100 (sum-constraint).
+        \item Support $\geq$ MinSup.
+        \item Confidence $\geq$ MinConf.
+    \end{enumerate}
+
+    \item Tại sao FP-Growth hiệu quả hơn Apriori với MinSup thấp?
+    \begin{enumerate}[label=\Alph*.]
+        \item FP-Growth không cần MinSup.
+        \item Khi MinSup thấp, số tập phổ biến lớn $\Rightarrow$ Apriori sinh rất nhiều ứng viên; FP-Growth tránh được điều này.
+        \item FP-Growth quét dữ liệu ít hơn 1 lần so với Apriori.
+        \item FP-Growth chỉ hoạt động khi MinSup $< 10\%$.
+    \end{enumerate}
+
+    \item Khai phá luật kết hợp \textbf{đa mức} thường phải đối mặt với thách thức:
+    \begin{enumerate}[label=\Alph*.]
+        \item Cần chọn $k$ cụm trước khi khai phá.
+        \item Cần định nghĩa MinSup khác nhau cho từng mức trừu tượng.
+        \item Không thể áp dụng tính chất Apriori.
+        \item Luôn sinh ra quá ít luật ở mức chi tiết.
+    \end{enumerate}
+
+\end{enumerate}
+
+% ============================================================
+\newpage
+\section*{ĐÁP ÁN}
+% ============================================================
+
+\subsection*{Câu hỏi tự luận -- Hướng dẫn trả lời}
+
+\begin{singlespace}
+\begin{longtable}{|p{0.08\textwidth}|p{0.82\textwidth}|}
+\hline
+\textbf{Câu} & \textbf{Nội dung cần trình bày} \\
+\hline
+\endhead
+1 & Khai phá luật kết hợp: tìm các quan hệ ``nếu...thì...'' giữa các item. Quy trình: tiền xử lý $\to$ khai phá $\to$ hậu xử lý. Ví dụ: basket analysis, recommendation, cross-marketing. \\
+\hline
+2 & Item: đối tượng quan tâm. Itemset: tập item. k-itemset: itemset có $k$ phần tử. Transaction: bản ghi chứa tập item. Dataset $D$: tập tất cả giao dịch. Ví dụ bảng giao dịch cụ thể. \\
+\hline
+3 & Support($A \Rightarrow B$) = support($A \cup B$) = $\frac{|T \in D: A \cup B \subseteq T|}{|D|}$. Confidence($A \Rightarrow B$) = $P(B|A)$ = support($A \cup B$)/support($A$). Support đo tần suất, confidence đo độ tin cậy điều kiện. \\
+\hline
+4 & Tập phổ biến: support $\geq$ MinSup. Luật mạnh: support $\geq$ MinSup và confidence $\geq$ MinConf. Cần cả hai vì luật cần vừa phổ biến (xuất hiện đủ nhiều) vừa đáng tin cậy (vế phải xuất hiện thường xuyên khi vế trái xảy ra). \\
+\hline
+5 & Apriori property: mọi tập con của tập phổ biến đều phổ biến. Anti-monotone: nếu $X$ không phổ biến thì $X \cup Y$ không phổ biến $\Rightarrow$ cắt tỉa toàn bộ superset của $X$ khỏi không gian tìm kiếm. \\
+\hline
+6 & (1) $L_1$ = tập phổ biến 1-itemset. (2) Sinh $C_k$ bằng self-join $L_{k-1}$ + pruning. (3) Đếm support trong $D$. (4) Lọc thành $L_k$. (5) Lặp đến khi $L_k = \emptyset$. Self-join: nối 2 itemset có $k-2$ item đầu giống. Pruning: loại ứng viên có $(k-1)$-subset không trong $L_{k-1}$. \\
+\hline
+7 & $C_1$ = \{\{A\},\{B\},\{C\},\{D\},\{E\},\{F\}\}. Đếm support: A=4, B=3, C=3, D=1, E=1, F=1. $L_1$ (MinSup=2) = \{\{A\}$^4$, \{B\}$^3$, \{C\}$^3$\}. Loại D, E, F. \\
+\hline
+8 & Apriori: nhiều lần quét ($k_{\max}$ lần), sinh nhiều ứng viên, tốn bộ nhớ, kém hiệu quả khi MinSup thấp. FP-Growth: 2 lần quét, không sinh ứng viên, bộ nhớ hiệu quả hơn (FP-tree), tốt với MinSup thấp. \\
+\hline
+9 & FP-tree là cây tiền tố nén tập dữ liệu. Xây dựng: (1) quét lần 1 tìm $L_1$; (2) quét lần 2 chèn giao dịch theo thứ tự giảm dần của support. FP-Growth đào conditional FP-tree theo từng item (divide-and-conquer) mà không sinh ứng viên. \\
+\hline
+10 & $L=\{A,B,C\}$: các luật = $A \Rightarrow BC$, $B \Rightarrow AC$, $C \Rightarrow AB$, $AB \Rightarrow C$, $AC \Rightarrow B$, $BC \Rightarrow A$. Giữ luật nào có confidence = support($L$)/support(vế trái) $\geq$ MinConf. \\
+\hline
+11 & Boolean: sự có/vắng mặt của item, ví dụ ``mua máy tính $\Rightarrow$ mua phần mềm''. Quantitative: liên quan đến giá trị định lượng, ví dụ ``tuổi 30-39 $\Rightarrow$ mua TV cao cấp''. \\
+\hline
+12 & Single-dimensional: một chiều (ví dụ: chỉ ``buys''). Multidimensional: nhiều chiều (ví dụ: age + income + buys). Hữu ích khi muốn tìm quan hệ phức tạp giữa nhiều thuộc tính nhân khẩu học và hành vi mua hàng. \\
+\hline
+13 & Multilevel: item ở nhiều mức trừu tượng (ví dụ: ``laptop'' và ``computer''). Ưu: tìm được quan hệ tổng quát hơn. Thách thức: cần xác định MinSup phù hợp cho từng mức (mức tổng quát cần MinSup thấp hơn). \\
+\hline
+14 & Data constraint: giới hạn item. Knowledge type: loại luật. Dimension/level: chiều/mức dữ liệu. Rule constraint: cấu trúc luật. Interestingness: ngưỡng support/confidence/lift. Anti-monotone: nếu itemset vi phạm thì superset cũng vi phạm $\Rightarrow$ cắt tỉa sớm. \\
+\hline
+15 & lift = confidence($A \Rightarrow B$)/support($B$) = support($A \cup B$)/(support($A$)$\cdot$support($B$)). lift$>1$: tương quan thuận; lift$=1$: độc lập; lift$<1$: tương quan nghịch. Lift quan trọng hơn confidence vì xét đến tần suất nền của $B$. \\
+\hline
+16 & Ví dụ: support(trà) = 90\%, support(cà phê) = 90\%, support(trà$\cup$cà phê) = 80\%. Confidence(trà$\Rightarrow$cà phê) = 89\% (mạnh). Nhưng lift = 80\%/(90\%$\times$90\%) = 0.99 $<$ 1 $\Rightarrow$ tương quan nghịch thực sự. Khắc phục: dùng lift hoặc $\chi^2$. \\
+\hline
+17 & $\chi^2 = \sum(O-E)^2/E$. $O$: tần suất quan sát, $E$: tần suất kỳ vọng nếu độc lập. $\chi^2=0$: hai item hoàn toàn độc lập ($O=E$). $\chi^2>0$ và test có ý nghĩa thống kê: có tương quan. \\
+\hline
+18 & cosine$(A,B)$ = support$(A \cup B)/\sqrt{\text{support}(A)\cdot\text{support}(B)}$. Ưu điểm: chuẩn hóa về $[0,1]$, đối xứng. Nhược: không phân biệt tương quan thuận/nghịch. Lift phân biệt được nhưng không bị chặn trong $[0,1]$. \\
+\hline
+19 & Hạn chế: (1) quét dữ liệu nhiều lần; (2) sinh nhiều ứng viên tốn bộ nhớ. Cải tiến: (1) FP-Growth -- không sinh ứng viên; (2) Hash-based -- dùng bảng băm đếm ứng viên hiệu quả hơn; (3) Sampling -- lấy mẫu dữ liệu; (4) Partition -- chia dữ liệu thành phân vùng. \\
+\hline
+20 & Bước 1 tốn kém vì số itemset ứng viên có thể lên đến $2^m$ (với $m$ item). Cần quét $D$ nhiều lần ($k_{\max}$ lần). Độ phức tạp phụ thuộc: số item $m$, số giao dịch $n$, MinSup. MinSup thấp $\Rightarrow$ nhiều tập phổ biến $\Rightarrow$ nhiều ứng viên $\Rightarrow$ tốn kém hơn nhiều. \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\subsection*{Câu hỏi trắc nghiệm -- Đáp án}
+
+\begin{singlespace}
+\begin{longtable}{|c|c||c|c||c|c||c|c|}
+\hline
+\textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} \\
+\hline
+\endhead
+1  & B & 11 & B & 21 & B & 31 & B \\
+\hline
+2  & B & 12 & C & 22 & A & 32 & B \\
+\hline
+3  & B & 13 & C & 23 & C & 33 & B \\
+\hline
+4  & B & 14 & B & 24 & B & 34 & C \\
+\hline
+5  & A & 15 & B & 25 & C & 35 & B \\
+\hline
+6  & C & 16 & B & 26 & B & 36 & B \\
+\hline
+7  & B & 17 & B & 27 & B & 37 & B \\
+\hline
+8  & C & 18 & B & 28 & B & 38 & C \\
+\hline
+9  & B & 19 & B & 29 & B & 39 & B \\
+\hline
+10 & B & 20 & B & 30 & B & 40 & B \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\subsection*{Giải thích đáp án trắc nghiệm}
+
+\begin{singlespace}
+\begin{longtable}{|p{0.06\textwidth}|p{0.84\textwidth}|}
+\hline
+\textbf{Câu} & \textbf{Giải thích} \\
+\hline
+\endhead
+1  & (B) -- Khai phá luật kết hợp là học không giám sát: tìm quan hệ ẩn mà không có nhãn lớp. \\
+\hline
+2  & (B) -- Basket analysis: phát hiện sản phẩm mua cùng nhau trong cùng giao dịch. \\
+\hline
+3  & (B) -- k-itemset là tập hợp gồm đúng $k$ item. \\
+\hline
+4  & (B) -- support($A \Rightarrow B$) = support($A \cup B$) = $P(A \cup B)$. \\
+\hline
+5  & (A) -- confidence($A \Rightarrow B$) = support($A \cup B$)/support($A$) = $P(B|A)$. \\
+\hline
+6  & (C) -- Frequent itemset: support $\geq$ MinSup (không phải MinConf). \\
+\hline
+7  & (B) -- Luật mạnh: thỏa đồng thời cả MinSup và MinConf. \\
+\hline
+8  & (C) -- confidence = 0.4/0.5 = 0.8 = 80\%. \\
+\hline
+9  & (B) -- Apriori property: mọi tập con của tập phổ biến đều phổ biến. \\
+\hline
+10 & (B) -- Anti-monotone: nếu $X$ không phổ biến thì $X \cup Y$ cũng không phổ biến. \\
+\hline
+11 & (B) -- Self-joining: nối hai $L_{k-1}$ itemset có $k-2$ item đầu giống nhau. \\
+\hline
+12 & (C) -- Pruning: loại $c \in C_k$ nếu có $(k-1)$-subset của $c$ không có trong $L_{k-1}$. \\
+\hline
+13 & (C) -- Apriori quét dữ liệu $k_{\max}$ lần (một lần cho mỗi cấp độ $k$). \\
+\hline
+14 & (B) -- Self-join($L_3$): $abc+abd \to abcd$; $acd+ace \to acde$. Kết quả: $\{abcd, acde\}$. \\
+\hline
+15 & (B) -- Pruning $acde$: kiểm tra 3-subset $ade$ $\notin L_3$ $\Rightarrow$ loại $acde$. Giữ $abcd$. \\
+\hline
+16 & (B) -- FP-Growth không sinh ứng viên và chỉ quét dữ liệu 2 lần (lần 1 tìm $L_1$, lần 2 xây FP-tree). \\
+\hline
+17 & (B) -- FP-tree nén tập dữ liệu vào cây tiền tố để khai phá không cần sinh ứng viên. \\
+\hline
+18 & (B) -- confidence = support($\{A,B,C\}$)/support($\{A,B\}$) = 3/3 = 100\%. \\
+\hline
+19 & (B) -- Tính đơn điệu của confidence: luật có vế trái là tập cha của luật vi phạm cũng vi phạm $\Rightarrow$ cắt tỉa. \\
+\hline
+20 & (B) -- Luật có age và buys là hai chiều khác nhau $\Rightarrow$ multidimensional quantitative rule. \\
+\hline
+21 & (B) -- Multilevel: item ở nhiều mức trừu tượng (laptop là mức con, computer là mức cha). \\
+\hline
+22 & (A) -- Ràng buộc anti-monotone: vi phạm tập con $\Rightarrow$ vi phạm superset $\Rightarrow$ cắt tỉa sớm. \\
+\hline
+23 & (A) -- lift = support($A \cup B$)/(support($A$)$\cdot$support($B$)). \\
+\hline
+24 & (C) -- lift = 1: $P(A \cup B) = P(A) \cdot P(B)$ $\Rightarrow$ $A$ và $B$ độc lập. \\
+\hline
+25 & (B) -- lift $< 1$: tần suất đồng xuất hiện thấp hơn kỳ vọng $\Rightarrow$ tương quan nghịch. \\
+\hline
+26 & (B) -- $\chi^2 = 0$ khi $O = E$ (tần suất quan sát = kỳ vọng) $\Rightarrow$ hai item độc lập. \\
+\hline
+27 & (B) -- Luật mạnh không đảm bảo tương quan thực; cần lift/$\chi^2$ để phát hiện tương quan giả. \\
+\hline
+28 & (B) -- $C_k$: candidate k-itemsets (tập ứng viên). \\
+\hline
+29 & (B) -- $L_k$: frequent k-itemsets (tập phổ biến sau khi lọc MinSup). \\
+\hline
+30 & (B) -- Bước 1 (tìm tập phổ biến) tốn kém nhất vì không gian tìm kiếm lên đến $2^m$. \\
+\hline
+31 & (B) -- MinSup thấp $\Rightarrow$ nhiều itemset vượt ngưỡng $\Rightarrow$ số tập phổ biến tăng, tính toán tốn kém hơn. \\
+\hline
+32 & (B) -- MinSup = 2 tính theo count. Item \{4\} có count = 1 $<$ 2 $\Rightarrow$ không phổ biến. \\
+\hline
+33 & (C) -- Theo anti-monotone: $\{A,B\}$ không phổ biến $\Rightarrow$ $\{A,B,C\}$ chắc chắn không phổ biến. \\
+\hline
+34 & (B) -- Số luật từ itemset $n$ phần tử: $2^n - 2$ (trừ $\emptyset$ và bản thân $L$). \\
+\hline
+35 & (B) -- cosine$(A,B)$ = support$(A \cup B)/\sqrt{\text{support}(A) \cdot \text{support}(B)}$. \\
+\hline
+36 & (B) -- Support constraint (support $\geq$ MinSup) là anti-monotone: tập cha có support $\leq$ tập con. \\
+\hline
+37 & (B) -- MinSup thấp $\Rightarrow$ rất nhiều tập phổ biến $\Rightarrow$ Apriori sinh hàng triệu ứng viên; FP-Growth tránh hoàn toàn việc sinh ứng viên. \\
+\hline
+38 & (C) -- Khai phá đa mức: mỗi mức có tần suất khác nhau, cần MinSup riêng (mức tổng quát thường cần MinSup cao hơn). \\
+\hline
+39 & (B) -- Câu 39 giải thích lý do FP-Growth hiệu quả hơn Apriori khi MinSup thấp (đã bao phủ ở câu 37). Ở đây liên quan đến constraint anti-monotone. \\
+\hline
+40 & (B) -- Khai phá đa mức cần MinSup khác nhau cho từng mức trừu tượng để tránh quá nhiều hoặc quá ít luật ở mỗi mức. \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\end{document}

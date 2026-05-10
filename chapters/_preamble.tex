@@ -1,0 +1,40 @@
+% ============================================================
+% _preamble.tex -- Shared preamble for all DM chapter docs
+% Usage: \input{../_preamble} AFTER \documentclass, BEFORE \begin{document}
+% ============================================================
+
+\usepackage{pslatex}                    % Times New Roman
+\usepackage[
+    paperheight=22.86cm,
+    paperwidth=15.24cm,
+    left=1.27cm, right=1.27cm,
+    top=1.6cm,   bottom=1.6cm,
+    headheight=1in
+]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage[hidelinks]{hyperref}
+\usepackage{graphicx}
+\usepackage{enumerate}
+\usepackage{float}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{setspace}
+\usepackage{sectsty}
+\usepackage[normalem]{ulem}
+\usepackage{caption}
+\usepackage{titlesec}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{enumitem}
+
+% ----- Typography settings -----
+\sectionfont{\fontsize{12pt}{12pt}\selectfont}
+\captionsetup{font={normalsize,rm}, labelfont=bf, skip=10pt}
+\titlelabel{\thetitle.\quad}
+\urlstyle{same}
+
+% ----- Paragraph indent -----
+\usepackage{indentfirst}        % indent the first paragraph of every section
+\setlength{\parindent}{1.5em}   % indent width (~4 spaces at 10pt)
+\setlength{\parskip}{0pt}       % no extra space between paragraphs

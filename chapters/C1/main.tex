@@ -1,0 +1,653 @@
+% Data Mining - Chapter 1: Overview
+\documentclass[10pt]{article}
+\input{../_preamble}
+
+\begin{document}
+\onehalfspacing
+\renewcommand{\arraystretch}{1.5}
+
+\newcommand{\ChapterNum}{1}
+\newcommand{\ChapterTitle}{TỔNG QUAN VỀ KHAI PHÁ DỮ LIỆU (DATA MINING)}
+\input{../_title}
+
+% ============================================================
+\section{GIỚI THIỆU VÀ TÌNH HUỐNG THỰC TIỄN}
+% ============================================================
+
+\subsection{Thực tế thúc đẩy Khai Phá Dữ Liệu}
+
+Trong thời đại số, chúng ta đang đối mặt với nghịch lý: \textbf{giàu dữ liệu nhưng nghèo thông tin} (\textit{``We are data rich, but information poor''}). Lượng dữ liệu khổng lồ được thu thập mỗi ngày nhưng chỉ một phần nhỏ được khai thác để tạo ra giá trị.
+
+\paragraph{Các tình huống điển hình:}
+\begin{itemize}
+    \item \textbf{Phát hiện gian lận tín dụng:} Nhận biết liệu người dùng thẻ tín dụng có phải chủ thẻ thật sự hay không.
+    \item \textbf{Dự đoán giá cổ phiếu:} Xây dựng mô hình dự báo biến động giá thị trường.
+    \item \textbf{Phát hiện tấn công mạng:} Phân tích lưu lượng mạng để nhận diện các cuộc tấn công dựa trên mẫu lưu lượng.
+\end{itemize}
+
+% ============================================================
+\section{KHÁM PHÁ TRI THỨC TỪ CƠ SỞ DỮ LIỆU (KDD)}
+% ============================================================
+
+\subsection{Định nghĩa KDD}
+
+\begin{itemize}
+    \item \textbf{Frawley et al. (1991):} ``KDD là quá trình phi tầm thường (nontrivial) xác định các mẫu hợp lệ, mới lạ, có khả năng hữu ích và cuối cùng là có thể hiểu được.''
+    \item \textbf{Fayyad et al. (1996):} KDD là quá trình sử dụng cơ sở dữ liệu cùng với các bước lựa chọn, tiền xử lý, biến đổi để áp dụng các phương pháp khai phá dữ liệu nhằm liệt kê các mẫu và đánh giá chúng như tri thức.
+\end{itemize}
+
+\subsection{Quy trình KDD (7 bước)}
+
+\begin{enumerate}
+    \item \textbf{Làm sạch dữ liệu (Data Cleaning):} Loại bỏ nhiễu, xử lý dữ liệu không nhất quán.
+    \item \textbf{Tích hợp dữ liệu (Data Integration):} Kết hợp dữ liệu từ nhiều nguồn khác nhau.
+    \item \textbf{Lựa chọn dữ liệu (Data Selection):} Chọn dữ liệu liên quan đến nhiệm vụ phân tích.
+    \item \textbf{Biến đổi dữ liệu (Data Transformation):} Chuẩn hóa và chuyển đổi định dạng dữ liệu.
+    \item \textbf{Khai phá dữ liệu (Data Mining):} Áp dụng các thuật toán để tìm kiếm mẫu.
+    \item \textbf{Đánh giá mẫu (Pattern Evaluation):} Đánh giá độ thú vị và ý nghĩa của các mẫu.
+    \item \textbf{Trình bày tri thức (Knowledge Presentation):} Trực quan hóa và trình bày tri thức khai thác được.
+\end{enumerate}
+
+Quy trình KDD là \textbf{lặp lại và tương tác} -- mỗi bước có thể cần quay lại bước trước.
+
+% ============================================================
+\section{KHAI PHÁ DỮ LIỆU -- KHÁI NIỆM CHÍNH}
+% ============================================================
+
+\subsection{Định nghĩa Khai Phá Dữ Liệu}
+
+Khai phá dữ liệu (Data Mining -- DM) là quá trình:
+\begin{itemize}
+    \item \textbf{``Trích xuất hoặc khai phá tri thức từ lượng lớn dữ liệu''} (J. Han et al.)
+    \item \textbf{``Trích xuất phi tầm thường các thông tin ẩn, chưa được biết trước và có khả năng hữu ích từ dữ liệu''}
+\end{itemize}
+
+Các tên gọi khác: Knowledge Discovery/Mining in Databases (KDD), Knowledge Extraction, Data/Pattern Analysis, Business Intelligence, Information Harvesting.
+
+\subsection{Nguồn dữ liệu trong DM}
+
+DM xử lý dữ liệu từ nhiều nguồn và kiểu khác nhau:
+\begin{itemize}
+    \item \textbf{Kiểu dữ liệu:} có cấu trúc, phi cấu trúc, bán cấu trúc.
+    \item \textbf{Nguồn:} Flat files, CSDL quan hệ, NoSQL, CSDL giao dịch, Data Warehouse, CSDL không gian/thời gian, văn bản, đa phương tiện, Web, mạng xã hội.
+    \item \textbf{Chế độ:} Batch (xử lý theo lô) hoặc Streaming (xử lý thời gian thực -- IoT, BI).
+\end{itemize}
+
+\subsection{Tri thức khai phá được}
+
+\begin{itemize}
+    \item Mô tả các lớp dữ liệu.
+    \item Mẫu phổ biến (frequent patterns), luật kết hợp (association rules).
+    \item Phân loại và dự đoán (classification and prediction).
+    \item Mô hình phân cụm (clustering model).
+    \item Ngoại lệ (outliers), xu hướng (trends).
+\end{itemize}
+
+Hai loại tri thức chính:
+\begin{itemize}
+    \item \textbf{Mô tả (Descriptive):} Mô tả đặc điểm chung của các đối tượng trong tập dữ liệu.
+    \item \textbf{Dự đoán (Predictive):} Khả năng suy luận/dự đoán thông tin mới dựa trên dữ liệu hiện có.
+\end{itemize}
+
+\subsection{DM là sự hội tụ của nhiều lĩnh vực}
+
+DM đứng ở giao điểm của: \textbf{Thống kê}, \textbf{Học máy}, \textbf{Công nghệ cơ sở dữ liệu}, \textbf{Trực quan hóa}, \textbf{Khoa học thông tin} và các lĩnh vực khác.
+
+% ============================================================
+\section{NHIỆM VỤ KHAI PHÁ DỮ LIỆU}
+% ============================================================
+
+\subsection{Các nhiệm vụ chính}
+
+\begin{enumerate}
+    \item \textbf{Mô tả dữ liệu (Data description)}
+    \item \textbf{Phân lớp (Classification)}
+    \item \textbf{Dự đoán (Prediction)}
+    \item \textbf{Phân cụm (Clustering)}
+    \item \textbf{Khai phá luật kết hợp (Association rule mining)}
+    \item \textbf{Phân tích xu hướng (Trend analysis)}
+    \item \textbf{Phát hiện ngoại lệ (Outlier detection)}
+    \item \textbf{Phân tích tương đồng (Similarity analysis)}
+\end{enumerate}
+
+\subsection{5 yếu tố chính của một nhiệm vụ DM}
+
+\begin{enumerate}
+    \item \textbf{Dữ liệu liên quan (Task-relevant data):} Nguồn dữ liệu, kiểu dữ liệu, thuộc tính được chọn.
+    \item \textbf{Tri thức kỳ vọng (Expected knowledge):} Loại tri thức cần khai phá (phân lớp, phân cụm, luật kết hợp,\ldots).
+    \item \textbf{Tri thức nền (Background knowledge):} Kiến thức lĩnh vực (domain knowledge) hỗ trợ quá trình huấn luyện và đánh giá.
+    \item \textbf{Độ đo thú vị (Interestingness measures):} Điểm số để đánh giá và so sánh các mô hình; cần đơn giản, chắc chắn, hữu ích và mới lạ.
+    \item \textbf{Đánh giá và trình bày mẫu (Pattern evaluation \& knowledge presentation):} Luật, bảng, biểu đồ, đồ thị, cây, khối dữ liệu,\ldots
+\end{enumerate}
+
+\subsection{4 thành phần chính của một thuật toán DM}
+
+\begin{enumerate}
+    \item \textbf{Cấu trúc mô hình/mẫu (Model/pattern structure):} Hàm tổng quát mô tả toàn bộ hoặc một tập con dữ liệu (ví dụ: $Y = aX + b$ là cấu trúc; $Y = 3X + 2$ là mô hình cụ thể).
+    \item \textbf{Hàm điểm số (Score function):} Đánh giá mức độ hiệu quả của mô hình/mẫu; ví dụ: likelihood, SSE, tỷ lệ phân loại sai.
+    \item \textbf{Phương pháp tối ưu hóa và tìm kiếm (Optimization \& Search method):} Tìm cấu trúc và tham số phù hợp nhất với hàm điểm số; ví dụ: greedy strategy, heuristics, genetic algorithms.
+    \item \textbf{Chiến lược quản lý dữ liệu (Data management strategy):} Tùy thuộc kích thước, kiểu dữ liệu: tải vào bộ nhớ (nhỏ-vừa) hoặc xử lý phân tán từ đĩa (lớn/big data).
+\end{enumerate}
+
+% ============================================================
+\section{QUY TRÌNH KHAI PHÁ DỮ LIỆU}
+% ============================================================
+
+\subsection{CRISP-DM}
+
+\textbf{CRISP-DM} (Cross Industry Standard Process for Data Mining, khởi xướng 09/1996) là tiêu chuẩn mở phổ biến nhất cho quy trình KDD:
+\begin{enumerate}
+    \item \textbf{Business Understanding:} Xác định mục tiêu kinh doanh và yêu cầu bài toán.
+    \item \textbf{Data Understanding:} Thu thập, khám phá và kiểm tra dữ liệu ban đầu.
+    \item \textbf{Data Preparation:} Chuẩn bị tập dữ liệu cuối cùng cho việc mô hình hóa.
+    \item \textbf{Modeling:} Áp dụng các kỹ thuật DM, hiệu chỉnh tham số.
+    \item \textbf{Evaluation:} Đánh giá mô hình theo mục tiêu kinh doanh.
+    \item \textbf{Deployment:} Triển khai mô hình vào sản xuất.
+\end{enumerate}
+
+\textbf{SEMMA} (SAS Institute): Sample $\to$ Explore $\to$ Modify $\to$ Model $\to$ Assess.
+
+\subsection{Hệ thống Khai Phá Dữ Liệu}
+
+Các thành phần của một hệ thống DM:
+\begin{itemize}
+    \item \textbf{Nguồn dữ liệu:} CSDL, kho dữ liệu, Web, tài liệu.
+    \item \textbf{Máy chủ DB/Data Warehouse:} Chuẩn bị dữ liệu tích hợp cho DM.
+    \item \textbf{Knowledge base:} Tri thức lĩnh vực/nền.
+    \item \textbf{Data mining engine:} Thực thi các nhiệm vụ DM.
+    \item \textbf{Pattern evaluation module:} Đánh giá độ thú vị bằng score functions và ngưỡng.
+    \item \textbf{User interface:} Tương tác người dùng -- chỉ định nhiệm vụ, đánh giá, trực quan hóa.
+\end{itemize}
+
+% ============================================================
+\section{VAI TRÒ VÀ ỨNG DỤNG}
+% ============================================================
+
+DM là công nghệ hiện đại được ứng dụng rộng rãi và ``vô hình'' trong cuộc sống hàng ngày:
+\begin{itemize}
+    \item \textbf{Thương mại và tài chính:} Phân tích giỏ hàng, phát hiện gian lận, chấm điểm tín dụng.
+    \item \textbf{Y tế:} Chẩn đoán bệnh, dự đoán dịch bệnh.
+    \item \textbf{Viễn thông:} Phân tích lưu lượng mạng, phát hiện tấn công.
+    \item \textbf{Khoa học:} Phân tích gen, khám phá thuốc mới.
+    \item \textbf{Marketing:} Cá nhân hóa quảng cáo, phân khúc khách hàng.
+\end{itemize}
+
+% ============================================================
+\section{TÓM TẮT}
+% ============================================================
+
+\begin{itemize}
+    \item DM/KDD: Trích xuất mẫu thú vị từ tập dữ liệu lớn; tri thức khai phá phải hợp lệ, hữu ích, mới lạ và có thể hiểu được.
+    \item Quy trình KDD gồm 7 bước lặp lại; DM là thành phần cốt lõi.
+    \item Các nhiệm vụ DM: mô tả, dự đoán, phân lớp, phân cụm, luật kết hợp, ngoại lệ, xu hướng.
+    \item 5 yếu tố: dữ liệu liên quan, tri thức kỳ vọng, tri thức nền, độ đo thú vị, trình bày tri thức.
+    \item 4 thành phần thuật toán: cấu trúc mô hình, hàm điểm số, tối ưu hóa/tìm kiếm, quản lý dữ liệu.
+    \item DM là sự hội tụ của thống kê, học máy, CSDL, trực quan hóa.
+\end{itemize}
+
+% ============================================================
+\newpage
+\section{CÂU HỎI TỰ LUẬN}
+% ============================================================
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Câu \arabic*.}]
+
+    \item Khai phá dữ liệu (Data Mining) là gì? Tại sao lại có câu nói ``We are data rich, but information poor''? Trình bày mối quan hệ giữa DM và KDD.
+
+    \item Trình bày đầy đủ 7 bước trong quy trình KDD. Tại sao quy trình này mang tính \textbf{lặp lại và tương tác}? Cho ví dụ một bước có thể cần quay lại bước trước.
+
+    \item Phân biệt hai loại tri thức trong DM: \textbf{mô tả (descriptive)} và \textbf{dự đoán (predictive)}. Cho ví dụ cụ thể cho mỗi loại.
+
+    \item DM được mô tả là ``sự hội tụ của nhiều lĩnh vực''. Hãy trình bày vai trò của: thống kê, học máy, công nghệ CSDL và trực quan hóa trong DM.
+
+    \item Liệt kê và giải thích 8 nhiệm vụ chính của khai phá dữ liệu. Phân loại chúng thành nhiệm vụ mô tả và nhiệm vụ dự đoán.
+
+    \item Trình bày \textbf{5 yếu tố chính} mô tả một nhiệm vụ DM. Với mỗi yếu tố, nêu một ví dụ cụ thể trong bài toán phân loại email spam.
+
+    \item Trình bày \textbf{4 thành phần chính} của một thuật toán DM. Phân tích từng thành phần trong thuật toán K-means.
+
+    \item Giải thích khái niệm \textbf{cấu trúc mô hình (model structure)} và \textbf{cấu trúc mẫu (pattern structure)}. Sự khác biệt giữa mô hình và mẫu là gì?
+
+    \item \textbf{Hàm điểm số (score function)} trong thuật toán DM cần đáp ứng những yêu cầu nào? Cho ví dụ 3 hàm điểm số khác nhau và chỉ ra ưu/nhược điểm của mỗi loại.
+
+    \item Trình bày quy trình \textbf{CRISP-DM}. Tại sao đây là tiêu chuẩn phổ biến nhất trong công nghiệp? So sánh CRISP-DM với SEMMA.
+
+    \item Mô tả kiến trúc của một \textbf{hệ thống khai phá dữ liệu} điển hình. Vai trò của từng thành phần là gì?
+
+    \item Giải thích \textbf{chiến lược quản lý dữ liệu} trong thuật toán DM. Cách tiếp cận khác nhau như thế nào giữa tập dữ liệu nhỏ/vừa và lớn?
+
+    \item Kể tên và mô tả ngắn gọn ít nhất 5 ứng dụng thực tiễn của DM trong cuộc sống. Với mỗi ứng dụng, nêu rõ nhiệm vụ DM tương ứng.
+
+    \item Phân tích \textbf{vai trò lịch sử} của DM trong sự phát triển của công nghệ cơ sở dữ liệu từ những năm 1960 đến hiện tại.
+
+    \item Tại sao DM được mô tả là ``ubiquitous and invisible'' (phổ biến và vô hình) trong cuộc sống hiện đại? Trình bày ít nhất 3 ứng dụng mà người dùng thường xuyên tiếp xúc mà không nhận ra.
+
+    \item So sánh \textbf{học có giám sát (supervised learning)}, \textbf{học không giám sát (unsupervised learning)} và \textbf{học tăng cường (reinforcement learning)} trong bối cảnh DM. Mỗi phương pháp phù hợp với nhiệm vụ DM nào?
+
+    \item Trình bày sự khác biệt giữa \textbf{Statistics (thống kê)} và \textbf{Data Mining}. Thống kê mô tả (descriptive statistics) và thống kê suy diễn (inductive statistics) đóng vai trò gì trong DM?
+
+    \item Các nguồn dữ liệu nào có thể được sử dụng trong DM? Thảo luận về thách thức khi khai phá từ dữ liệu \textbf{streaming (thời gian thực)} so với dữ liệu \textbf{batch}.
+
+    \item Giải thích khái niệm \textbf{độ đo thú vị (interestingness measure)}. Một độ đo thú vị cần thỏa mãn những tiêu chí nào? Tại sao nó quan trọng trong DM?
+
+    \item Phân tích mối quan hệ giữa \textbf{DM và công nghệ cơ sở dữ liệu (DB technologies)}. Công nghệ CSDL hỗ trợ DM như thế nào? Cho ví dụ về các hệ thống DM tích hợp vào DBMS.
+
+\end{enumerate}
+
+% ============================================================
+\newpage
+\section{CÂU HỎI TRẮC NGHIỆM}
+% ============================================================
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Câu \arabic*.}]
+
+    \item Định nghĩa nào sau đây mô tả chính xác nhất về Khai Phá Dữ Liệu (DM)?
+    \begin{enumerate}[label=\Alph*.]
+        \item Quá trình truy vấn dữ liệu từ cơ sở dữ liệu quan hệ.
+        \item Quá trình trích xuất tri thức ẩn, chưa biết và có khả năng hữu ích từ lượng lớn dữ liệu.
+        \item Quá trình làm sạch và chuẩn hóa dữ liệu trước khi phân tích.
+        \item Quá trình thiết kế và quản lý cơ sở dữ liệu.
+    \end{enumerate}
+
+    \item Bước nào sau đây \textbf{không} thuộc quy trình KDD?
+    \begin{enumerate}[label=\Alph*.]
+        \item Data Cleaning.
+        \item Data Mining.
+        \item Data Normalization.
+        \item Pattern Evaluation.
+    \end{enumerate}
+
+    \item Trong quy trình KDD, bước \textbf{Data Mining} đứng ở vị trí thứ mấy?
+    \begin{enumerate}[label=\Alph*.]
+        \item Thứ 3.
+        \item Thứ 4.
+        \item Thứ 5.
+        \item Thứ 7.
+    \end{enumerate}
+
+    \item Tri thức \textbf{mô tả (descriptive)} trong DM có đặc điểm:
+    \begin{enumerate}[label=\Alph*.]
+        \item Dự báo giá trị tương lai dựa trên dữ liệu hiện tại.
+        \item Mô tả các đặc điểm chung của đối tượng trong tập dữ liệu.
+        \item Phân loại đối tượng mới vào các lớp đã biết.
+        \item Xác định các luật nhân quả trong dữ liệu.
+    \end{enumerate}
+
+    \item Phân cụm (Clustering) thuộc loại tri thức nào?
+    \begin{enumerate}[label=\Alph*.]
+        \item Dự đoán (Predictive).
+        \item Mô tả (Descriptive).
+        \item Cả hai.
+        \item Không thuộc loại nào.
+    \end{enumerate}
+
+    \item DM là sự hội tụ của nhiều lĩnh vực. Lĩnh vực nào \textbf{không} được đề cập trong slide?
+    \begin{enumerate}[label=\Alph*.]
+        \item Thống kê (Statistics).
+        \item Học máy (Machine Learning).
+        \item Kinh tế học (Economics).
+        \item Công nghệ cơ sở dữ liệu (DB Technology).
+    \end{enumerate}
+
+    \item Số yếu tố chính mô tả một nhiệm vụ DM là:
+    \begin{enumerate}[label=\Alph*.]
+        \item 3.
+        \item 4.
+        \item 5.
+        \item 7.
+    \end{enumerate}
+
+    \item \textbf{Hàm điểm số (score function)} trong thuật toán DM dùng để:
+    \begin{enumerate}[label=\Alph*.]
+        \item Quản lý dữ liệu từ đĩa vào bộ nhớ.
+        \item Đánh giá mức độ hiệu quả/phù hợp của mô hình/mẫu với tập dữ liệu.
+        \item Tìm kiếm các mẫu phổ biến trong tập dữ liệu.
+        \item Trực quan hóa kết quả khai phá.
+    \end{enumerate}
+
+    \item Thành phần nào của thuật toán DM giúp cải thiện \textbf{khả năng mở rộng (scalability)} cho dữ liệu lớn?
+    \begin{enumerate}[label=\Alph*.]
+        \item Model/pattern structure.
+        \item Score function.
+        \item Optimization and search method.
+        \item Data management strategy.
+    \end{enumerate}
+
+    \item CRISP-DM được khởi xướng vào năm nào?
+    \begin{enumerate}[label=\Alph*.]
+        \item 1991.
+        \item 1993.
+        \item 1996.
+        \item 2000.
+    \end{enumerate}
+
+    \item Bước nào trong CRISP-DM đánh giá mô hình theo \textbf{mục tiêu kinh doanh}?
+    \begin{enumerate}[label=\Alph*.]
+        \item Modeling.
+        \item Data Preparation.
+        \item Evaluation.
+        \item Deployment.
+    \end{enumerate}
+
+    \item \textbf{Pattern evaluation module} trong hệ thống DM có nhiệm vụ:
+    \begin{enumerate}[label=\Alph*.]
+        \item Lưu trữ tri thức nền (background knowledge).
+        \item Áp dụng độ đo thú vị và ngưỡng để lọc mẫu có ý nghĩa.
+        \item Trực quan hóa kết quả khai phá cho người dùng.
+        \item Kết nối với các nguồn dữ liệu.
+    \end{enumerate}
+
+    \item Phân loại (Classification) và dự đoán (Prediction) thuộc loại nhiệm vụ DM nào?
+    \begin{enumerate}[label=\Alph*.]
+        \item Mô tả (Descriptive).
+        \item Dự đoán (Predictive).
+        \item Không có phân loại.
+        \item Phân cụm.
+    \end{enumerate}
+
+    \item Câu nói ``We are data rich, but information poor'' phản ánh điều gì?
+    \begin{enumerate}[label=\Alph*.]
+        \item Thiếu thiết bị lưu trữ dữ liệu.
+        \item Lượng dữ liệu lớn nhưng khả năng rút ra tri thức hữu ích còn hạn chế.
+        \item Dữ liệu chất lượng thấp do thiếu chuẩn hóa.
+        \item Cơ sở dữ liệu không đủ lớn để khai phá.
+    \end{enumerate}
+
+    \item Trong hệ thống DM, \textbf{Knowledge base} lưu trữ:
+    \begin{enumerate}[label=\Alph*.]
+        \item Kết quả của quá trình khai phá dữ liệu.
+        \item Tri thức lĩnh vực/nền hỗ trợ quá trình DM.
+        \item Tập dữ liệu gốc chưa xử lý.
+        \item Các mô hình đã huấn luyện.
+    \end{enumerate}
+
+    \item Theo SEMMA, 5 bước lần lượt là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Sample, Explore, Mine, Model, Assess.
+        \item Select, Extract, Modify, Mine, Assess.
+        \item Sample, Explore, Modify, Model, Assess.
+        \item Summarize, Explore, Modify, Mine, Apply.
+    \end{enumerate}
+
+    \item Phương pháp tối ưu hóa và tìm kiếm trong thuật toán DM có mục tiêu:
+    \begin{enumerate}[label=\Alph*.]
+        \item Lưu trữ dữ liệu hiệu quả trên đĩa.
+        \item Tìm cấu trúc và tham số mô hình tối ưu nhất theo hàm điểm số.
+        \item Trực quan hóa không gian tham số.
+        \item Đánh giá mức độ thú vị của mẫu.
+    \end{enumerate}
+
+    \item Nhiệm vụ \textbf{Outlier detection} trong DM nhằm mục đích:
+    \begin{enumerate}[label=\Alph*.]
+        \item Nhóm các đối tượng tương đồng thành cụm.
+        \item Tìm các đối tượng bất thường, không tuân theo đặc tính chung của dữ liệu.
+        \item Dự đoán giá trị tương lai của thuộc tính số.
+        \item Khai phá các mẫu phổ biến giữa các item.
+    \end{enumerate}
+
+    \item Nguồn dữ liệu nào sau đây \textbf{không} được đề cập trong slide C1?
+    \begin{enumerate}[label=\Alph*.]
+        \item Flat files.
+        \item Social networks.
+        \item Blockchain databases.
+        \item Time series databases.
+    \end{enumerate}
+
+    \item Theo tháp quản lý dữ liệu (Data Management Pyramid), từ dưới lên, thứ tự đúng là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Data Sources $\to$ DM $\to$ OLAP $\to$ Data Warehouses $\to$ Making Decisions.
+        \item Data Sources $\to$ Data Warehouses $\to$ OLAP/Statistical Analysis $\to$ DM $\to$ Visualization $\to$ Making Decisions.
+        \item DM $\to$ Data Sources $\to$ Visualization $\to$ OLAP $\to$ Making Decisions.
+        \item Data Sources $\to$ Statistical Analysis $\to$ DM $\to$ Data Warehouses $\to$ Making Decisions.
+    \end{enumerate}
+
+    \item Số bước trong quy trình KDD theo Fayyad et al. (1996) là:
+    \begin{enumerate}[label=\Alph*.]
+        \item 5.
+        \item 6.
+        \item 7.
+        \item 9.
+    \end{enumerate}
+
+    \item Phương pháp tìm kiếm \textbf{greedy strategy} trong DM có đặc điểm:
+    \begin{enumerate}[label=\Alph*.]
+        \item Luôn tìm được nghiệm tối ưu toàn cục.
+        \item Chọn lựa chọn tốt nhất tại mỗi bước mà không quay lại, có thể bỏ lỡ nghiệm tối ưu toàn cục.
+        \item Duyệt toàn bộ không gian tìm kiếm.
+        \item Sử dụng các toán tử tiến hóa (crossover, mutation) để tìm nghiệm.
+    \end{enumerate}
+
+    \item Trong DM, \textbf{Trend analysis} được sử dụng để:
+    \begin{enumerate}[label=\Alph*.]
+        \item Nhóm các đối tượng tương đồng.
+        \item Phát hiện các quy tắc kết hợp giữa các mục.
+        \item Phát hiện xu hướng thay đổi của dữ liệu theo thời gian.
+        \item Đánh giá mức độ thú vị của mẫu.
+    \end{enumerate}
+
+    \item Loại dữ liệu nào sau đây là dữ liệu \textbf{phi cấu trúc (unstructured)}?
+    \begin{enumerate}[label=\Alph*.]
+        \item Bảng dữ liệu trong CSDL quan hệ.
+        \item File CSV.
+        \item Email và văn bản tự do.
+        \item File JSON.
+    \end{enumerate}
+
+    \item Quy trình KDD là \textbf{lặp lại (iterative)} vì lý do nào?
+    \begin{enumerate}[label=\Alph*.]
+        \item Mỗi bước phải thực hiện đúng một lần.
+        \item Kết quả của bước sau có thể yêu cầu điều chỉnh các bước trước đó.
+        \item DM luôn cần nhiều vòng lặp để đạt độ chính xác 100\%.
+        \item Phần cứng máy tính không đủ mạnh để xử lý một lần.
+    \end{enumerate}
+
+    \item \textbf{Association rule mining} trong DM thuộc loại tri thức nào?
+    \begin{enumerate}[label=\Alph*.]
+        \item Dự đoán (Predictive).
+        \item Mô tả (Descriptive).
+        \item Phân lớp (Classification).
+        \item Phân cụm (Clustering).
+    \end{enumerate}
+
+    \item Trong 4 thành phần của thuật toán DM, thành phần nào ảnh hưởng lớn nhất đến \textbf{hiệu suất tính toán} khi làm việc với Big Data?
+    \begin{enumerate}[label=\Alph*.]
+        \item Model/pattern structure.
+        \item Score function.
+        \item Optimization and search method.
+        \item Data management strategy.
+    \end{enumerate}
+
+    \item Thống kê suy diễn (Inductive Statistics) trong DM chủ yếu liên quan đến nhiệm vụ:
+    \begin{enumerate}[label=\Alph*.]
+        \item Mô tả và tóm tắt dữ liệu.
+        \item Dự đoán và suy luận từ mẫu sang tổng thể.
+        \item Phát hiện ngoại lệ.
+        \item Phân cụm dữ liệu.
+    \end{enumerate}
+
+    \item Hệ thống Oracle Data Mining thuộc thành phần nào của hệ thống DM?
+    \begin{enumerate}[label=\Alph*.]
+        \item User interface.
+        \item Pattern evaluation module.
+        \item Data mining engine tích hợp vào DBMS.
+        \item Knowledge base.
+    \end{enumerate}
+
+    \item Bước \textbf{Data Transformation} trong KDD bao gồm hoạt động nào?
+    \begin{enumerate}[label=\Alph*.]
+        \item Xóa dữ liệu trùng lặp và sửa lỗi.
+        \item Kết hợp dữ liệu từ nhiều nguồn vào Data Warehouse.
+        \item Chuẩn hóa (normalization) và xây dựng thuộc tính mới (feature construction).
+        \item Trực quan hóa mẫu khai phá được.
+    \end{enumerate}
+
+    \item Trong một hệ thống DM, \textbf{User interface} có chức năng:
+    \begin{enumerate}[label=\Alph*.]
+        \item Thực thi các nhiệm vụ DM trên tập dữ liệu.
+        \item Cho phép người dùng chỉ định nhiệm vụ, xác minh dữ liệu, đánh giá và trực quan hóa kết quả.
+        \item Lưu trữ tri thức lĩnh vực.
+        \item Kết nối với Data Warehouse.
+    \end{enumerate}
+
+    \item Thuật ngữ nào \textbf{không} đồng nghĩa với ``Data Mining''?
+    \begin{enumerate}[label=\Alph*.]
+        \item Knowledge Discovery in Databases (KDD).
+        \item Business Intelligence.
+        \item Data Warehousing.
+        \item Information Harvesting.
+    \end{enumerate}
+
+    \item \textbf{Phân lớp (Classification)} trong DM thuộc loại học:
+    \begin{enumerate}[label=\Alph*.]
+        \item Học không giám sát.
+        \item Học có giám sát.
+        \item Học tăng cường.
+        \item Học bán giám sát.
+    \end{enumerate}
+
+    \item \textbf{Phân cụm (Clustering)} trong DM thuộc loại học:
+    \begin{enumerate}[label=\Alph*.]
+        \item Học có giám sát.
+        \item Học tăng cường.
+        \item Học không giám sát.
+        \item Học bán giám sát.
+    \end{enumerate}
+
+    \item Yếu tố nào trong 5 yếu tố của nhiệm vụ DM cung cấp \textbf{ngưỡng} để đánh giá kết quả?
+    \begin{enumerate}[label=\Alph*.]
+        \item Task-relevant data.
+        \item Expected knowledge.
+        \item Background knowledge.
+        \item Interestingness measures.
+    \end{enumerate}
+
+    \item Bước \textbf{Knowledge Presentation} trong KDD thường sử dụng:
+    \begin{enumerate}[label=\Alph*.]
+        \item Chỉ bảng số liệu.
+        \item Biểu đồ, đồ thị, cây, luật, khối dữ liệu,\ldots
+        \item Chỉ mã nguồn chương trình.
+        \item Văn bản mô tả không có hình ảnh.
+    \end{enumerate}
+
+    \item Theo slide C1, \textbf{Data Warehouse} phục vụ DM bằng cách:
+    \begin{enumerate}[label=\Alph*.]
+        \item Thực thi trực tiếp các thuật toán phân lớp.
+        \item Cung cấp dữ liệu tích hợp, được tổ chức theo nhiều chiều (dimension), sẵn sàng cho khai phá.
+        \item Lưu trữ kết quả khai phá dữ liệu.
+        \item Trực quan hóa tri thức khai phá được.
+    \end{enumerate}
+
+    \item Đặc điểm nào phân biệt DM với truy vấn CSDL thông thường (SQL query)?
+    \begin{enumerate}[label=\Alph*.]
+        \item DM truy vấn dữ liệu nhanh hơn SQL.
+        \item DM tìm các mẫu ẩn, chưa biết trước; SQL chỉ truy xuất dữ liệu đã biết cần tìm.
+        \item DM chỉ hoạt động với CSDL phi quan hệ.
+        \item DM và SQL query hoàn toàn giống nhau về mục đích.
+    \end{enumerate}
+
+    \item Trong 4 thành phần của thuật toán DM, thành phần nào xác định \textbf{hình dạng tổng quát} của giải pháp?
+    \begin{enumerate}[label=\Alph*.]
+        \item Score function.
+        \item Model/pattern structure.
+        \item Data management strategy.
+        \item Optimization and search method.
+    \end{enumerate}
+
+    \item Phát biểu nào sau đây về KDD là \textbf{sai}?
+    \begin{enumerate}[label=\Alph*.]
+        \item KDD là quy trình lặp lại và tương tác.
+        \item DM là thành phần cốt lõi và duy nhất trong KDD.
+        \item KDD bao gồm 7 bước chính.
+        \item Mục tiêu KDD là tìm tri thức hợp lệ, mới lạ và hữu ích.
+    \end{enumerate}
+
+\end{enumerate}
+
+% ============================================================
+\newpage
+\section*{ĐÁP ÁN}
+% ============================================================
+
+\subsection*{Câu hỏi tự luận -- Hướng dẫn trả lời}
+
+\begin{singlespace}
+\begin{longtable}{|p{0.08\textwidth}|p{0.82\textwidth}|}
+\hline
+\textbf{Câu} & \textbf{Nội dung cần trình bày} \\
+\hline
+\endhead
+1 & DM: trích xuất tri thức ẩn từ lượng lớn dữ liệu. Nghịch lý: thu thập nhiều dữ liệu nhưng ít rút ra được giá trị hữu ích. KDD là quy trình tổng thể; DM là bước cốt lõi trong KDD. \\
+\hline
+2 & 7 bước KDD: làm sạch $\to$ tích hợp $\to$ lựa chọn $\to$ biến đổi $\to$ khai phá $\to$ đánh giá mẫu $\to$ trình bày tri thức. Lặp lại vì kết quả bước sau có thể yêu cầu điều chỉnh bước trước (ví dụ: kết quả DM tệ $\to$ quay lại Data Transformation). \\
+\hline
+3 & Mô tả: mô tả đặc điểm chung -- ví dụ: phân tích hành vi mua hàng của nhóm khách hàng. Dự đoán: suy luận thông tin mới -- ví dụ: dự đoán giá cổ phiếu, phát hiện gian lận thẻ tín dụng. \\
+\hline
+4 & Thống kê: mô tả và suy diễn từ mẫu; Học máy: xây dựng mô hình từ dữ liệu; Công nghệ CSDL: quản lý, truy cập, truy vấn dữ liệu lớn hiệu quả; Trực quan hóa: giúp người dùng hiểu tri thức khai phá được. \\
+\hline
+5 & 8 nhiệm vụ: mô tả, phân lớp, dự đoán, phân cụm, luật kết hợp, xu hướng, ngoại lệ, tương đồng. Mô tả: mô tả, phân cụm, luật kết hợp, tương đồng. Dự đoán: phân lớp, dự đoán, xu hướng, ngoại lệ. \\
+\hline
+6 & 5 yếu tố: (1) dữ liệu liên quan -- ví dụ: email có/không nhãn spam; (2) tri thức kỳ vọng -- phân lớp; (3) tri thức nền -- đặc điểm ngôn ngữ spam; (4) độ đo thú vị -- tỷ lệ chính xác; (5) trình bày -- bộ phân loại email. \\
+\hline
+7 & 4 thành phần trong K-means: (1) cấu trúc mô hình: $k$ clusters với tâm $r_i$; (2) hàm điểm số: SSE; (3) tối ưu hóa: lặp gán + cập nhật tâm (greedy); (4) quản lý dữ liệu: tải tất cả vào RAM (nếu nhỏ/vừa). \\
+\hline
+8 & Model structure: tóm tắt toàn bộ dataset (global view) -- ví dụ $Y = aX + b$. Pattern structure: tóm tắt một tập con dữ liệu thỏa điều kiện cụ thể (local view). Model = cấu trúc đã có giá trị tham số; Pattern = mẫu mô tả một nhóm nhỏ đối tượng. \\
+\hline
+9 & Score function cần: độc lập với dataset, dễ tính, phản ánh đúng chất lượng mô hình. Ví dụ: (1) SSE -- nhỏ hơn tốt hơn; (2) Likelihood -- lớn hơn tốt hơn; (3) Misclassification rate -- nhỏ hơn tốt hơn. \\
+\hline
+10 & CRISP-DM: 6 bước (Business Understanding, Data Understanding, Data Preparation, Modeling, Evaluation, Deployment). Phổ biến vì mở, tập trung cả yêu cầu kinh doanh lẫn kỹ thuật. SEMMA (SAS): 5 bước, chủ yếu tập trung kỹ thuật. \\
+\hline
+11 & Kiến trúc gồm: Data sources, DB/DW server (chuẩn bị dữ liệu), Knowledge base (tri thức nền), DM engine (thực thi nhiệm vụ), Pattern evaluation module (đánh giá mẫu), User interface (tương tác). \\
+\hline
+12 & Nhỏ/vừa: tải toàn bộ vào RAM, xử lý trực tiếp. Lớn/Big Data: lưu trên đĩa/hệ thống phân tán; từng phần được tải vào RAM để xử lý đồng thời; cần hỗ trợ indexing, phân tán, bảo mật. \\
+\hline
+13 & Ví dụ: (1) phát hiện spam -- phân lớp; (2) gợi ý sản phẩm -- luật kết hợp; (3) phân nhóm khách hàng -- phân cụm; (4) phát hiện gian lận thẻ -- ngoại lệ; (5) dự đoán giá cổ phiếu -- dự đoán. \\
+\hline
+14 & Từ 1960s (thu thập, tạo DB) $\to$ 1970s-80s (DBMS) $\to$ 1980s-nay (Advanced DB: OO, spatial, temporal) $\to$ 1980s-nay (Data Warehousing + DM) $\to$ 1990s-nay (Web-based DB) $\to$ Tương lai (Integrated systems). \\
+\hline
+15 & Ví dụ: (1) Netflix/Spotify gợi ý nội dung; (2) Thẻ tín dụng tự động phát hiện gian lận; (3) Google tự hoàn thành tìm kiếm. Người dùng không thấy thuật toán chạy ở hậu trường. \\
+\hline
+16 & Supervised: có nhãn lớp -- phân lớp, dự đoán. Unsupervised: không nhãn -- phân cụm, luật kết hợp. Reinforcement: học từ phần thưởng -- không phổ biến trong DM truyền thống. \\
+\hline
+17 & Thống kê truyền thống: giả thuyết trước, kiểm định; DM: không giả thuyết trước, tìm kiếm mẫu. Descriptive statistics: mô tả đặc trưng dữ liệu (hỗ trợ bước Data Summarization trong KDD). Inductive: suy diễn từ mẫu (hỗ trợ xây dựng mô hình dự đoán). \\
+\hline
+18 & Batch: xử lý dữ liệu tĩnh theo lô, kết quả không cần tức thời, dễ xử lý hơn. Streaming: dữ liệu đến liên tục thời gian thực (IoT), cần xử lý nhanh, không lưu toàn bộ. Thách thức streaming: bộ nhớ hạn chế, cần thuật toán online/incremental. \\
+\hline
+19 & Độ đo thú vị đánh giá giá trị của mẫu/luật. Tiêu chí: đơn giản (simple), chắc chắn (certain), hữu ích (useful), mới lạ (novel). Quan trọng vì không phải mọi mẫu đều có ý nghĩa thực tiễn; giúp lọc ra tri thức thực sự có giá trị. \\
+\hline
+20 & DB technologies giúp: quản lý Big Data (paging, phân tán), tổ chức đa chiều (Data Warehouse), hỗ trợ nhiều kiểu dữ liệu, tối ưu truy vấn, bảo mật. Ví dụ: Oracle DM, SQL Server analyzers, IBM Intelligent Miner. \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\subsection*{Câu hỏi trắc nghiệm -- Đáp án}
+
+\begin{singlespace}
+\begin{longtable}{|c|c||c|c||c|c||c|c|}
+\hline
+\textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} \\
+\hline
+\endhead
+1 & B & 11 & C & 21 & B & 31 & C \\
+\hline
+2 & C & 12 & B & 22 & B & 32 & B \\
+\hline
+3 & C & 13 & B & 23 & C & 33 & D \\
+\hline
+4 & B & 14 & B & 24 & B & 34 & B \\
+\hline
+5 & B & 15 & B & 25 & B & 35 & B \\
+\hline
+6 & C & 16 & C & 26 & B & 36 & C \\
+\hline
+7 & C & 17 & B & 27 & D & 37 & B \\
+\hline
+8 & B & 18 & B & 28 & B & 38 & B \\
+\hline
+9 & D & 19 & C & 29 & C & 39 & B \\
+\hline
+10 & C & 20 & B & 30 & C & 40 & B \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\end{document}

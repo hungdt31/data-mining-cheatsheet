@@ -1,0 +1,902 @@
+% Data Mining - Chapter 5: Data Clustering
+\documentclass[10pt]{article}
+\input{../_preamble}
+
+\begin{document}
+\onehalfspacing
+\renewcommand{\arraystretch}{1.5}
+
+% ----- Chapter metadata -----
+\newcommand{\ChapterNum}{5}
+\newcommand{\ChapterTitle}{PHÂN CỤM DỮ LIỆU (DATA CLUSTERING)}
+\input{../_title}
+
+% ============================================================
+\section{TỔNG QUAN VỀ PHÂN CỤM}
+% ============================================================
+
+\subsection{Khái niệm phân cụm}
+
+\textbf{Phân cụm (Clustering)} là quá trình nhóm các đối tượng dữ liệu thành các cụm (cluster) sao cho:
+\begin{itemize}
+    \item Các đối tượng \textbf{trong cùng một cụm} có độ tương đồng cao với nhau (khoảng cách nội cụm -- intra-cluster distances -- được \textbf{tối thiểu hóa}).
+    \item Các đối tượng \textbf{thuộc các cụm khác nhau} có độ tương đồng thấp (khoảng cách liên cụm -- inter-cluster distances -- được \textbf{tối đa hóa}).
+\end{itemize}
+
+Ví dụ ứng dụng: phân nhóm khách hàng, phân tích mạng xã hội, phát hiện bất thường (outlier detection).
+
+\subsection{Đo lường độ bất tương đồng giữa các đối tượng}
+
+Dữ liệu được biểu diễn dưới dạng \textbf{ma trận dữ liệu} ($n$ đối tượng, $p$ thuộc tính) và \textbf{ma trận bất tương đồng} $d(i,j)$ thỏa:
+\begin{itemize}
+    \item $d(i,i) = 0$
+    \item $d(i,j) = d(j,i) \geq 0$
+    \item $d(i,j) \leq d(i,k) + d(k,j)$ (bất đẳng thức tam giác)
+\end{itemize}
+
+\textbf{Đo lường độ tương đồng bằng Cosine} (cho đối tượng dạng vector):
+\[
+s(\mathbf{x}, \mathbf{y}) = \frac{\mathbf{x}^T \mathbf{y}}{|\mathbf{x}||\mathbf{y}|} = \frac{x_1 y_1 + \dots + x_p y_p}{\sqrt{x_1^2 + \dots + x_p^2}\cdot\sqrt{y_1^2 + \dots + y_p^2}}
+\]
+
+\subsection{Tính khoảng cách theo từng loại thuộc tính}
+
+\paragraph{(a) Thuộc tính có thang đo khoảng (Interval-scaled):}
+Trước tiên chuẩn hóa bằng Z-score: $z_{if} = \dfrac{x_{if} - m_f}{s_f}$, trong đó $m_f$ là giá trị trung bình và $s_f$ là độ lệch tuyệt đối trung bình. Sau đó áp dụng:
+\begin{itemize}
+    \item \textbf{Euclidean:} $d(i,j) = \sqrt{(x_{i1}-x_{j1})^2 + \dots + (x_{ip}-x_{jp})^2}$
+    \item \textbf{Manhattan:} $d(i,j) = |x_{i1}-x_{j1}| + \dots + |x_{ip}-x_{jp}|$
+    \item \textbf{Minkowski:} $d(i,j) = \left(|x_{i1}-x_{j1}|^q + \dots + |x_{ip}-x_{jp}|^q\right)^{1/q}$
+\end{itemize}
+
+\paragraph{(b) Thuộc tính nhị phân (Binary):}
+\begin{itemize}
+    \item \textbf{Khoảng cách đơn giản} (symmetric): $d(i,j) = \dfrac{b+c}{a+b+c+d}$
+    \item \textbf{Khoảng cách Jaccard} (asymmetric): $d(i,j) = \dfrac{b+c}{a+b+c}$
+\end{itemize}
+Trong đó $a$: cả hai đều bằng 1; $b$: $i=1, j=0$; $c$: $i=0, j=1$; $d$: cả hai bằng 0.
+
+\paragraph{(c) Thuộc tính danh mục (Categorical):} $d_{ij}^{(f)} = 0$ nếu $x_{if} = x_{jf}$; bằng 1 trong các trường hợp còn lại.
+
+\paragraph{(d) Thuộc tính thứ tự (Ordinal) hoặc tỉ lệ (Ratio-scaled):} Chuyển đổi $z_{if} = \dfrac{r_{if} - 1}{M_f - 1}$ rồi áp dụng Minkowski/Euclidean/Manhattan.
+
+\paragraph{(e) Thuộc tính hỗn hợp (Mixed types):}
+\[
+d(i,j) = \frac{\sum_{f=1}^{p} \delta_{ij}^{(f)} \cdot d_{ij}^{(f)}}{\sum_{f=1}^{p} \delta_{ij}^{(f)}}
+\]
+Trong đó $\delta_{ij}^{(f)} = 0$ nếu thiếu giá trị, ngược lại bằng 1.
+
+\subsection{Các yêu cầu thiết yếu của một phương pháp phân cụm tốt}
+
+\begin{itemize}
+    \item \textbf{Khả năng mở rộng (Scalability):} hoạt động tốt khi kích thước và loại dữ liệu thay đổi.
+    \item \textbf{Xử lý đa kiểu dữ liệu} và dữ liệu chiều cao.
+    \item \textbf{Phát hiện cụm có hình dạng tùy ý.}
+    \item \textbf{Yêu cầu tối thiểu tham số} đầu vào.
+    \item \textbf{Khả năng xử lý nhiễu và giá trị ngoại lệ (outlier).}
+    \item \textbf{Phân cụm tăng dần} và không nhạy cảm với thứ tự đầu vào.
+    \item \textbf{Tính khả giải thích và khả dụng.}
+\end{itemize}
+
+\subsection{Các phương pháp phân cụm phổ biến}
+
+\begin{enumerate}
+    \item \textbf{Phân hoạch (Partitioning):} tạo và đánh giá các phân hoạch dựa trên tiêu chí cho trước.
+    \item \textbf{Phân cấp (Hierarchical):} phân chia tập dữ liệu theo thứ bậc.
+    \item \textbf{Dựa trên mật độ (Density-based):} dựa trên tính kết nối và mật độ phân bố.
+    \item \textbf{Dựa trên mô hình (Model-based):} đề xuất mô hình phân phối xác suất cho mỗi cụm.
+\end{enumerate}
+
+\subsection{Đánh giá kết quả phân cụm}
+
+\begin{itemize}
+    \item \textbf{Đánh giá ngoài (External validation):} so sánh với cấu trúc cụm đã biết trước. Các độ đo: Rand statistic, Jaccard coefficient, Folkes-Mallows index.
+    \item \textbf{Đánh giá trong (Internal validation):} dựa trên ma trận khoảng cách. Các độ đo: Silhouette index, Dunn's index.
+    \item \textbf{Đánh giá tương đối (Relative validation):} so sánh giữa các phương pháp.
+\end{itemize}
+
+\textbf{Entropy} (càng nhỏ càng tốt) để đánh giá độ thuần của cụm:
+\[
+\text{Entropy}(P) = -\sum_{i} \frac{n_i}{n} \sum_{j} \frac{n_{ij}}{n_i} \log \frac{n_{ij}}{n_i}
+\]
+trong đó $n_{ij} = |P_i \cap C_j|$ là số đối tượng trong cụm $P_i$ thuộc lớp thực sự $C_j$.
+
+% ============================================================
+\section{PHÂN CỤM DỰA TRÊN PHÂN HOẠCH -- K-MEANS}
+% ============================================================
+
+\subsection{Thuật toán K-means}
+
+\textbf{Ý tưởng:} Chia $n$ đối tượng thành $k$ cụm không chồng lên nhau, tối thiểu hóa tổng bình phương khoảng cách từ mỗi đối tượng đến trọng tâm (centroid) cụm của nó.
+
+\paragraph{Hàm mục tiêu:}
+\[
+s = \sum_{i=1}^{k} s_i = \sum_{i=1}^{k} \sum_{x \in C_i} \text{dist}(x, r_i)^2
+\]
+trong đó $r_i$ là trọng tâm của cụm $C_i$.
+
+\paragraph{Các bước của thuật toán:}
+\begin{enumerate}
+    \item Chọn ngẫu nhiên $k$ đối tượng làm tâm cụm ban đầu.
+    \item \textbf{Gán} mỗi đối tượng vào cụm có tâm gần nhất.
+    \item \textbf{Cập nhật} tâm cụm bằng cách tính trung bình tất cả đối tượng trong cụm.
+    \item Lặp lại bước 2--3 cho đến khi các tâm cụm không thay đổi (hoặc thay đổi dưới ngưỡng).
+\end{enumerate}
+
+\subsection{Đặc điểm của K-means}
+
+\begin{itemize}
+    \item \textbf{Tối ưu hóa cục bộ} -- kết quả phụ thuộc vào khởi tạo ban đầu.
+    \item \textbf{Độ phức tạp:} $O(nkt)$, với $n$ là kích thước tập dữ liệu, $k$ là số cụm, $t$ là số vòng lặp ($k \ll n$, $t \ll n$).
+    \item \textbf{Nhạy cảm} với nhiễu và giá trị ngoại lệ.
+    \item \textbf{Không phù hợp} với cụm có hình dạng phi lồi (non-convex) hoặc kích thước khác nhau rõ rệt.
+    \item Kết quả tạo ra các cụm có dạng \textbf{hình cầu} (hyperspherical) với kích thước tương đối đều nhau.
+    \item Phương pháp mở rộng: \textbf{PAM} (k-medoids) -- sử dụng medoid thay vì mean để tăng độ bền với nhiễu.
+\end{itemize}
+
+% ============================================================
+\section{PHÂN CỤM PHÂN CẤP (HIERARCHICAL CLUSTERING)}
+% ============================================================
+
+\subsection{Khái niệm}
+
+Phân cụm phân cấp nhóm các đối tượng thành cây cụm (hierarchy). Có hai hướng tiếp cận:
+\begin{itemize}
+    \item \textbf{Agglomerative (bottom-up -- từ dưới lên):} Ban đầu mỗi đối tượng là một cụm riêng, sau đó lần lượt gộp các cụm gần nhau nhất.
+    \item \textbf{Divisive (top-down -- từ trên xuống):} Ban đầu tất cả đối tượng trong một cụm, sau đó lần lượt tách ra.
+\end{itemize}
+
+\textbf{Ưu điểm:} Không cần biết trước số cụm $k$.\\
+\textbf{Nhược điểm:} Không thể quay lại (undo) ở mỗi bước gộp/tách.
+
+\subsection{AGNES và DIANA}
+
+\begin{itemize}
+    \item \textbf{AGNES} (Agglomerative NESting): thuật toán agglomerative. Khởi đầu với $n$ cụm đơn, lần lượt gộp dựa trên tiêu chí khoảng cách.
+    \item \textbf{DIANA} (Divisive ANAlysis): thuật toán divisive. Khởi đầu với 1 cụm chứa tất cả đối tượng, lần lượt tách ra.
+\end{itemize}
+
+\subsection{Tiêu chí gộp cụm}
+
+\begin{itemize}
+    \item \textbf{Single-linkage:} Khoảng cách giữa hai cụm = khoảng cách \textbf{ngắn nhất} giữa hai đối tượng bất kỳ trong hai cụm. Có xu hướng tạo ra chuỗi dài (chaining effect).
+    \item \textbf{Complete-linkage:} Khoảng cách giữa hai cụm = khoảng cách \textbf{dài nhất} giữa hai đối tượng bất kỳ. Tạo cụm dạng compact hơn.
+    \item \textbf{Average-linkage:} Trung bình tất cả khoảng cách giữa các cặp đối tượng.
+    \item \textbf{Ward's method:} Tối thiểu hóa tổng bình phương trong cụm khi gộp.
+\end{itemize}
+
+\subsection{Dendrogram}
+
+Quá trình phân cụm phân cấp được biểu diễn bằng \textbf{dendrogram} (sơ đồ cây). Bằng cách cắt dendrogram ở một ngưỡng tương đồng nhất định, ta thu được số cụm mong muốn.
+
+\subsection{Một số thuật toán phân cụm phân cấp nổi bật}
+
+\begin{itemize}
+    \item \textbf{BIRCH} (Balanced Iterative Reducing and Clustering using Hierarchies): phù hợp với tập dữ liệu lớn.
+    \item \textbf{ROCK} (Robust Clustering using linKs): xử lý thuộc tính danh mục/rời rạc.
+    \item \textbf{Chameleon:} dùng mô hình động để xác định độ tương đồng giữa cặp cụm.
+\end{itemize}
+
+\subsection{Vấn đề của phân cụm phân cấp}
+
+\begin{itemize}
+    \item Cần xác định chính xác điểm dừng gộp/tách.
+    \item Khả năng mở rộng kém: mỗi quyết định gộp/tách phải đánh giá nhiều đối tượng.
+    \item Giải pháp: kết hợp với phương pháp khác (ví dụ: chia-và-trị -- divide and conquer).
+\end{itemize}
+
+% ============================================================
+\section{PHÂN CỤM DỰA TRÊN MẬT ĐỘ (DENSITY-BASED CLUSTERING)}
+% ============================================================
+
+\subsection{Khái niệm cơ bản}
+
+\begin{itemize}
+    \item \textbf{Cụm} là vùng \textbf{dày đặc} các đối tượng, bao quanh bởi vùng thưa.
+    \item Đối tượng ở vùng thưa là \textbf{nhiễu/ngoại lệ (noise/outlier)}.
+    \item Hình dạng và kích thước cụm rất đa dạng (không bị giới hạn dạng cầu).
+\end{itemize}
+
+\textbf{Các khái niệm trong DBSCAN:}
+\begin{itemize}
+    \item $\varepsilon$ \textbf{(epsilon):} bán kính lân cận của một đối tượng.
+    \item \textbf{$\varepsilon$-neighborhood:} tập tất cả đối tượng trong vùng bán kính $\varepsilon$ của đối tượng $p$.
+    \item \textbf{Core object (đối tượng lõi):} đối tượng $p$ có số lượng đối tượng trong $\varepsilon$-neighborhood $\geq$ MinPts.
+    \item \textbf{Directly density-reachable (trực tiếp đạt được theo mật độ):} $q$ trực tiếp đạt được từ $p$ nếu $q \in \varepsilon\text{-neighborhood}(p)$ và $p$ là core object. \textit{Quan hệ bất đối xứng.}
+    \item \textbf{Density-reachable (đạt được theo mật độ):} $q$ đạt được từ $p$ nếu tồn tại chuỗi $p_1, \dots, p_n$ với $p_1=p$, $p_n=q$ sao cho $p_{i+1}$ directly density-reachable từ $p_i$. \textit{Quan hệ bất đối xứng.}
+    \item \textbf{Density-connected (kết nối theo mật độ):} $p$ và $q$ density-connected nếu tồn tại $o$ sao cho cả $p$ và $q$ đều density-reachable từ $o$. \textit{Quan hệ đối xứng.}
+    \item \textbf{Border object (đối tượng biên):} không phải core object nhưng nằm trong $\varepsilon$-neighborhood của một core object.
+    \item \textbf{Noise:} đối tượng không thuộc bất kỳ cụm nào.
+\end{itemize}
+
+\subsection{Thuật toán DBSCAN}
+
+\paragraph{Yêu cầu:}
+\begin{itemize}
+    \item Đầu vào: $D$, $\varepsilon$, MinPts.
+    \item Đầu ra: Các cụm dựa trên mật độ và nhiễu.
+\end{itemize}
+
+\paragraph{Các bước hiện thực:}
+\begin{enumerate}
+    \item Xác định $\varepsilon$-neighborhood cho mỗi đối tượng $p \in D$.
+    \item Nếu $p$ là core object $\Rightarrow$ tạo cụm cho $p$.
+    \item Từ bất kỳ core object $p$, tìm tất cả đối tượng density-reachable từ $p$ và thêm vào cụm của $p$.
+    \begin{itemize}
+        \item Các cụm density-reachable có thể gộp lại.
+        \item Dừng khi không còn đối tượng nào có thể thêm vào cụm.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Đặc điểm của DBSCAN}
+
+\begin{itemize}
+    \item Phát hiện cụm có kích thước và hình dạng đa dạng.
+    \item Không giả định về phân phối đối tượng.
+    \item \textbf{Không cần} xác định $k$ ban đầu.
+    \item Khởi tạo không ảnh hưởng đến kết quả.
+    \item Cần định nghĩa \textbf{mật độ} qua $\varepsilon$ và MinPts.
+    \item Nhận diện nhiễu và ngoại lệ hiệu quả.
+    \item \textbf{Độ phức tạp:} $O(n \log n)$ đến $O(n^2)$.
+\end{itemize}
+
+\textbf{Thuật toán liên quan:} OPTICS (Ordering Points To Identify the Clustering Structure), DENCLUE (DENsity-based CLUstEring based on distribution functions).
+
+% ============================================================
+\section{PHÂN CỤM DỰA TRÊN MÔ HÌNH (MODEL-BASED CLUSTERING)}
+% ============================================================
+
+\subsection{Khái niệm}
+
+Phương pháp này \textbf{tối ưu hóa sự khớp} giữa dữ liệu và một số mô hình toán học, dựa trên giả định rằng dữ liệu được sinh ra từ một hỗn hợp các mô hình phân phối xác suất.
+
+\paragraph{Các hướng tiếp cận:}
+\begin{itemize}
+    \item \textbf{Thống kê:} thuật toán EM (Expectation-Maximization) -- mở rộng của K-means.
+    \item \textbf{Học máy:} phân cụm khái niệm (conceptual clustering).
+    \item \textbf{Dựa trên mạng nơ-ron:} Self-Organizing Feature Map (SOM).
+\end{itemize}
+
+\subsection{Thuật toán EM (Expectation-Maximization)}
+
+\textbf{Giả định:} Dữ liệu được sinh ra từ hỗn hợp $K$ phân phối Gaussian, mỗi phân phối có tham số $\Theta_j = (\mu_j, \sigma_j)$.
+
+\paragraph{EM là thuật toán lặp để tìm Maximum Likelihood (ML) kể cả khi có dữ liệu bị thiếu:}
+
+\begin{itemize}
+    \item \textbf{E-step (Expectation):} Ước lượng xác suất mỗi đối tượng $x_i$ thuộc cụm $j$:
+    \[
+    E[z_{ij}] = p(x_i \in C_j | x_i) = \frac{p(x_i | x_i \in C_j) \cdot p_j}{\sum_{n=1}^{K} p(x_i | x_i \in C_n) \cdot p_n}
+    \]
+    \item \textbf{M-step (Maximization):} Cập nhật tham số mô hình:
+    \[
+    \mu_j = \frac{\sum_{i=1}^{m} E[z_{ij}] \cdot x_i}{\sum_{i=1}^{m} E[z_{ij}]}, \quad p_j = \frac{1}{m}\sum_{i=1}^{m} E[z_{ij}]
+    \]
+\end{itemize}
+
+\paragraph{Tóm tắt thuật toán EM:}
+\begin{enumerate}
+    \item \textbf{Khởi tạo:} Chọn ngẫu nhiên $K$ đối tượng làm tâm cụm ban đầu; ước lượng $\Theta_j = (\mu_j, \sigma_j)$.
+    \item \textbf{Lặp:}
+    \begin{itemize}
+        \item \textbf{E-step:} Gán $x_i$ vào cụm $C_k$ với xác suất $P(x_i \in C_k)$, $k=1\ldots K$.
+        \item \textbf{M-step:} Ước lượng lại $\Theta_j = (\mu_j, \sigma_j)$.
+        \item Dừng khi đạt điều kiện hội tụ (ví dụ: ML không tăng thêm đáng kể).
+    \end{itemize}
+\end{enumerate}
+
+\subsection{EM so với K-means}
+
+\begin{itemize}
+    \item EM sử dụng xác suất thuộc cụm (soft assignment) thay vì gán cứng (hard assignment) như K-means.
+    \item EM phù hợp với dữ liệu có phân phối Gaussian.
+    \item EM tổng quát hơn K-means, nhưng tính toán phức tạp hơn.
+\end{itemize}
+
+% ============================================================
+\section{CÁC PHƯƠNG PHÁP PHÂN CỤM KHÁC}
+% ============================================================
+
+\subsection{Phân cụm cứng và phân cụm mờ}
+
+\begin{itemize}
+    \item \textbf{Phân cụm cứng (Hard clustering):}
+    \begin{itemize}
+        \item Mỗi đối tượng thuộc \textbf{đúng một cụm}.
+        \item Mức độ thành viên (Degree of Membership -- DoM): 0 hoặc 1.
+        \item Ranh giới giữa các cụm rõ ràng.
+    \end{itemize}
+    \item \textbf{Phân cụm mờ (Fuzzy clustering):}
+    \begin{itemize}
+        \item Một đối tượng có thể thuộc \textbf{nhiều cụm} với mức độ thành viên từ 0 đến 1.
+        \item Ranh giới giữa các cụm không rõ ràng (mờ -- fuzzy).
+        \item Phù hợp với dữ liệu có ranh giới tự nhiên không rõ ràng.
+    \end{itemize}
+\end{itemize}
+
+% ============================================================
+\section{TÓM TẮT}
+% ============================================================
+
+\begin{itemize}
+    \item \textbf{Phân cụm} là kỹ thuật học không giám sát, nhóm dữ liệu dựa trên độ tương đồng.
+    \item Đo lường độ tương đồng phụ thuộc vào \textbf{kiểu dữ liệu} của các thuộc tính.
+    \item \textbf{K-means:} đơn giản, hiệu quả nhưng nhạy cảm với khởi tạo và nhiễu; tạo cụm hình cầu.
+    \item \textbf{Hierarchical:} không cần $k$, kết quả trực quan qua dendrogram; khó mở rộng.
+    \item \textbf{DBSCAN:} phát hiện cụm hình dạng tùy ý, xử lý nhiễu tốt; cần chọn $\varepsilon$ và MinPts phù hợp.
+    \item \textbf{EM:} phân cụm mềm (soft) dựa trên mô hình xác suất; tổng quát hơn K-means.
+    \item Đánh giá kết quả phân cụm bằng external, internal hoặc relative validation.
+\end{itemize}
+
+% ============================================================
+\newpage
+\section{CÂU HỎI TỰ LUẬN}
+% ============================================================
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Câu \arabic*.}]
+
+    \item Phân cụm dữ liệu (data clustering) là gì? Trình bày mục tiêu của phân cụm và nêu ít nhất 3 ứng dụng thực tiễn của phân cụm trong khai phá dữ liệu.
+
+    \item Giải thích sự khác biệt giữa \textbf{ma trận dữ liệu} và \textbf{ma trận bất tương đồng} trong phân cụm. Ma trận bất tương đồng $d(i,j)$ cần thỏa mãn những điều kiện nào?
+
+    \item Trình bày các công thức tính khoảng cách Euclidean, Manhattan và Minkowski cho các thuộc tính có thang đo khoảng. Khi nào nên chuẩn hóa dữ liệu trước khi tính khoảng cách?
+
+    \item Giải thích khoảng cách đơn giản (simple distance) và khoảng cách Jaccard dùng cho thuộc tính nhị phân. Khi nào dùng khoảng cách đối xứng, khi nào dùng khoảng cách Jaccard? Cho ví dụ minh họa.
+
+    \item Trình bày đầy đủ các bước của thuật toán K-means. Hàm mục tiêu của K-means là gì? Thuật toán dừng khi nào?
+
+    \item Phân tích các ưu điểm và nhược điểm của thuật toán K-means. Tại sao K-means không phù hợp với cụm có hình dạng phi lồi (non-convex)?
+
+    \item So sánh phân cụm phân cấp theo hướng từ dưới lên (AGNES) và từ trên xuống (DIANA). Phân cụm phân cấp có ưu điểm gì so với K-means? Hạn chế là gì?
+
+    \item Giải thích tiêu chí \textbf{single-linkage} và \textbf{complete-linkage} trong gộp cụm phân cấp. Mỗi tiêu chí tạo ra loại cụm như thế nào? Minh họa bằng ví dụ cụ thể.
+
+    \item \textbf{Dendrogram} là gì? Làm thế nào để đọc và sử dụng dendrogram để xác định số cụm? Nêu ưu điểm của cách biểu diễn này.
+
+    \item Trình bày và phân biệt các khái niệm trong DBSCAN: \textbf{$\varepsilon$-neighborhood}, \textbf{core object}, \textbf{directly density-reachable}, \textbf{density-reachable} và \textbf{density-connected}. Tính đối xứng của mỗi quan hệ?
+
+    \item Mô tả chi tiết thuật toán DBSCAN. Đối tượng nào được xem là \textbf{border object}, đối tượng nào là \textbf{noise}? Các tham số $\varepsilon$ và MinPts ảnh hưởng thế nào đến kết quả?
+
+    \item So sánh DBSCAN với K-means về: (a) khả năng phát hiện hình dạng cụm tùy ý, (b) xử lý nhiễu, (c) nhu cầu chỉ định số cụm trước, (d) độ phức tạp tính toán.
+
+    \item Phân cụm dựa trên mô hình (model-based clustering) là gì? Trình bày giả định về mô hình phân phối dữ liệu trong phương pháp EM. Ưu điểm của phương pháp này so với K-means là gì?
+
+    \item Giải thích thuật toán EM (Expectation-Maximization). Mô tả chi tiết E-step và M-step. Thuật toán EM được khởi tạo và dừng như thế nào?
+
+    \item So sánh \textbf{phân cụm cứng (hard clustering)} và \textbf{phân cụm mờ (fuzzy clustering)}. Trong trường hợp nào nên sử dụng phân cụm mờ? Nêu ví dụ thực tế.
+
+    \item Trình bày các yêu cầu thiết yếu mà một phương pháp phân cụm tốt cần đáp ứng. Với mỗi yêu cầu, cho biết phương pháp nào (K-means, DBSCAN, Hierarchical, EM) đáp ứng tốt nhất.
+
+    \item Giải thích ba phương pháp đánh giá kết quả phân cụm: \textbf{external validation}, \textbf{internal validation} và \textbf{relative validation}. Nêu ít nhất một độ đo cụ thể cho mỗi phương pháp.
+
+    \item Entropy trong đánh giá kết quả phân cụm được tính như thế nào? Một giá trị entropy nhỏ có nghĩa là gì? Cho ví dụ tính entropy cho một kết quả phân cụm cụ thể.
+
+    \item Trình bày cách tính khoảng cách cho thuộc tính \textbf{hỗn hợp (mixed types)}. Khi một giá trị thuộc tính bị thiếu, hệ số $\delta_{ij}^{(f)}$ được xử lý như thế nào?
+
+    \item Phân tích các vấn đề (challenges) trong phân cụm phân cấp về khả năng mở rộng. Giải pháp nào có thể được áp dụng để cải thiện hiệu suất? Trình bày thuật toán BIRCH và ý tưởng chính của nó.
+
+\end{enumerate}
+
+% ============================================================
+\newpage
+\section{CÂU HỎI TRẮC NGHIỆM}
+% ============================================================
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Câu \arabic*.}]
+
+    % --- TỔNG QUAN ---
+    \item Mục tiêu chính của phân cụm dữ liệu là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tối đa hóa khoảng cách nội cụm và tối thiểu hóa khoảng cách liên cụm.
+        \item Tối thiểu hóa khoảng cách nội cụm và tối đa hóa khoảng cách liên cụm.
+        \item Gán nhãn cho từng đối tượng dựa trên tập huấn luyện.
+        \item Tìm các luật kết hợp giữa các thuộc tính.
+    \end{enumerate}
+
+    \item Phân cụm là kỹ thuật học:
+    \begin{enumerate}[label=\Alph*.]
+        \item Có giám sát (supervised learning).
+        \item Không giám sát (unsupervised learning).
+        \item Bán giám sát (semi-supervised learning).
+        \item Học tăng cường (reinforcement learning).
+    \end{enumerate}
+
+    \item Ma trận bất tương đồng $d(i,j)$ \textbf{không} thỏa điều kiện nào sau đây?
+    \begin{enumerate}[label=\Alph*.]
+        \item $d(i,i) = 0$
+        \item $d(i,j) = d(j,i) \geq 0$
+        \item $d(i,j) \leq d(i,k) + d(k,j)$
+        \item $d(i,j) = d(i,k) \cdot d(k,j)$
+    \end{enumerate}
+
+    \item Khoảng cách Minkowski với $q=1$ tương đương với:
+    \begin{enumerate}[label=\Alph*.]
+        \item Khoảng cách Euclidean.
+        \item Khoảng cách Manhattan.
+        \item Khoảng cách Cosine.
+        \item Khoảng cách Jaccard.
+    \end{enumerate}
+
+    \item Khoảng cách Minkowski với $q=2$ tương đương với:
+    \begin{enumerate}[label=\Alph*.]
+        \item Khoảng cách Manhattan.
+        \item Khoảng cách Chebyshev.
+        \item Khoảng cách Euclidean.
+        \item Khoảng cách Hamming.
+    \end{enumerate}
+
+    \item Khoảng cách Jaccard dùng cho thuộc tính nhị phân \textbf{bất đối xứng} có công thức:
+    \begin{enumerate}[label=\Alph*.]
+        \item $d(i,j) = \dfrac{b+c}{a+b+c+d}$
+        \item $d(i,j) = \dfrac{b+c}{a+b+c}$
+        \item $d(i,j) = \dfrac{a}{a+b+c}$
+        \item $d(i,j) = \dfrac{a+d}{a+b+c+d}$
+    \end{enumerate}
+
+    \item Trong đo lường tương đồng bằng Cosine, kết quả $s(\mathbf{x}, \mathbf{y}) = 1$ có nghĩa là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Hai vector hoàn toàn trực giao (vuông góc).
+        \item Hai vector hoàn toàn giống nhau (cùng hướng).
+        \item Hai vector hoàn toàn ngược chiều.
+        \item Hai vector không có quan hệ gì với nhau.
+    \end{enumerate}
+
+    \item Trong đánh giá kết quả phân cụm, \textbf{internal validation} dựa trên:
+    \begin{enumerate}[label=\Alph*.]
+        \item Cấu trúc cụm được định nghĩa sẵn từ bên ngoài.
+        \item Ma trận khoảng cách (proximity matrix) tính từ tập dữ liệu.
+        \item So sánh hiệu suất giữa các phương pháp khác nhau.
+        \item Nhãn lớp thực sự của dữ liệu.
+    \end{enumerate}
+
+    % --- K-MEANS ---
+    \item Thuật toán K-means dừng khi:
+    \begin{enumerate}[label=\Alph*.]
+        \item Số vòng lặp đạt đúng bằng $k$.
+        \item Các tâm cụm không thay đổi (hoặc thay đổi dưới ngưỡng).
+        \item Tất cả đối tượng được gán vào đúng 1 cụm.
+        \item Số cụm tăng lên bằng $n$.
+    \end{enumerate}
+
+    \item Độ phức tạp tính toán của thuật toán K-means là:
+    \begin{enumerate}[label=\Alph*.]
+        \item $O(n^2)$
+        \item $O(n \log n)$
+        \item $O(nkt)$
+        \item $O(k^n)$
+    \end{enumerate}
+
+    \item Nhược điểm của K-means là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Không cần xác định số cụm $k$ trước.
+        \item Chỉ tạo ra cụm có hình dạng phi lồi (non-convex).
+        \item Nhạy cảm với nhiễu và giá trị ngoại lệ.
+        \item Tự động phát hiện số cụm tối ưu.
+    \end{enumerate}
+
+    \item K-means tạo ra các cụm có dạng:
+    \begin{enumerate}[label=\Alph*.]
+        \item Hình dạng tùy ý (arbitrary shapes).
+        \item Hình cầu (hyperspherical) với kích thước tương đối đều nhau.
+        \item Hình elipse kéo dài.
+        \item Chuỗi (chain-like).
+    \end{enumerate}
+
+    \item Phương pháp \textbf{PAM (k-medoids)} khác K-means ở chỗ:
+    \begin{enumerate}[label=\Alph*.]
+        \item Sử dụng \textbf{medoid} (đối tượng thực trong tập dữ liệu) thay vì mean làm tâm cụm.
+        \item Không cần xác định số cụm $k$ trước.
+        \item Sử dụng mật độ để xác định cụm.
+        \item Sử dụng phân phối Gaussian.
+    \end{enumerate}
+
+    \item Hàm mục tiêu của K-means là tối thiểu hóa:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tổng khoảng cách giữa các tâm cụm.
+        \item Tổng bình phương khoảng cách từ mỗi đối tượng đến tâm cụm của nó.
+        \item Số lượng cụm $k$.
+        \item Khoảng cách liên cụm trung bình.
+    \end{enumerate}
+
+    % --- HIERARCHICAL ---
+    \item Phân cụm phân cấp theo hướng agglomerative (AGNES) bắt đầu bằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item Một cụm chứa tất cả đối tượng, sau đó tách dần.
+        \item Mỗi đối tượng là một cụm riêng, sau đó gộp dần.
+        \item $k$ cụm ngẫu nhiên, sau đó cập nhật tâm cụm.
+        \item Các cụm dựa trên mật độ vùng.
+    \end{enumerate}
+
+    \item Ưu điểm của phân cụm phân cấp so với K-means là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Không cần xác định số cụm $k$ trước.
+        \item Có độ phức tạp thấp hơn K-means.
+        \item Không bị ảnh hưởng bởi nhiễu.
+        \item Luôn tìm được cụm tối ưu toàn cục.
+    \end{enumerate}
+
+    \item Tiêu chí \textbf{single-linkage} trong gộp cụm dựa trên:
+    \begin{enumerate}[label=\Alph*.]
+        \item Khoảng cách trung bình giữa tất cả cặp đối tượng.
+        \item Khoảng cách ngắn nhất giữa hai đối tượng bất kỳ trong hai cụm.
+        \item Khoảng cách dài nhất giữa hai đối tượng bất kỳ trong hai cụm.
+        \item Khoảng cách giữa hai tâm cụm.
+    \end{enumerate}
+
+    \item Tiêu chí \textbf{complete-linkage} trong gộp cụm dựa trên:
+    \begin{enumerate}[label=\Alph*.]
+        \item Khoảng cách ngắn nhất giữa hai đối tượng bất kỳ trong hai cụm.
+        \item Khoảng cách trung bình giữa các tâm cụm.
+        \item Khoảng cách dài nhất giữa hai đối tượng bất kỳ trong hai cụm.
+        \item Khoảng cách Jaccard giữa hai cụm.
+    \end{enumerate}
+
+    \item Dendrogram được sử dụng để:
+    \begin{enumerate}[label=\Alph*.]
+        \item Biểu diễn quá trình phân cụm phân cấp theo dạng cây.
+        \item Biểu diễn phân phối mật độ của dữ liệu.
+        \item Tính khoảng cách giữa các cụm.
+        \item Khởi tạo tâm cụm ban đầu cho K-means.
+    \end{enumerate}
+
+    \item Thuật toán \textbf{BIRCH} được thiết kế để giải quyết vấn đề:
+    \begin{enumerate}[label=\Alph*.]
+        \item Phân cụm dữ liệu phân phối Gaussian.
+        \item Phân cụm phân cấp trên tập dữ liệu lớn (scalability).
+        \item Phát hiện cụm có hình dạng tùy ý.
+        \item Phân cụm dữ liệu thuộc tính danh mục.
+    \end{enumerate}
+
+    % --- DENSITY-BASED ---
+    \item Trong DBSCAN, \textbf{core object} là đối tượng:
+    \begin{enumerate}[label=\Alph*.]
+        \item Có khoảng cách tới tâm cụm nhỏ nhất.
+        \item Có số đối tượng trong $\varepsilon$-neighborhood $\geq$ MinPts.
+        \item Nằm trên ranh giới giữa hai cụm.
+        \item Không thuộc bất kỳ cụm nào.
+    \end{enumerate}
+
+    \item Trong DBSCAN, đối tượng \textbf{noise (nhiễu)} là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Đối tượng nằm ở biên giới của cụm.
+        \item Đối tượng có ít nhất MinPts láng giềng.
+        \item Đối tượng không thuộc bất kỳ cụm nào.
+        \item Đối tượng có khoảng cách lớn nhất tới tâm cụm.
+    \end{enumerate}
+
+    \item Quan hệ \textbf{density-reachable} trong DBSCAN có tính:
+    \begin{enumerate}[label=\Alph*.]
+        \item Đối xứng (symmetric).
+        \item Bất đối xứng (asymmetric).
+        \item Phản xạ (reflexive) nhưng không bắc cầu.
+        \item Cả đối xứng và phản xạ.
+    \end{enumerate}
+
+    \item Quan hệ \textbf{density-connected} trong DBSCAN có tính:
+    \begin{enumerate}[label=\Alph*.]
+        \item Bất đối xứng.
+        \item Đối xứng.
+        \item Chỉ đúng với core object.
+        \item Chỉ đúng với border object.
+    \end{enumerate}
+
+    \item Ưu điểm của DBSCAN so với K-means là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Cần ít tham số đầu vào hơn.
+        \item Phát hiện cụm có hình dạng tùy ý và xử lý nhiễu tốt.
+        \item Chỉ hoạt động với dữ liệu phân phối Gaussian.
+        \item Có độ phức tạp $O(n)$ trong mọi trường hợp.
+    \end{enumerate}
+
+    \item Độ phức tạp của DBSCAN trong trường hợp tốt nhất là:
+    \begin{enumerate}[label=\Alph*.]
+        \item $O(n)$
+        \item $O(n \log n)$
+        \item $O(n^2)$
+        \item $O(nk)$
+    \end{enumerate}
+
+    \item Thuật toán \textbf{OPTICS} trong phân cụm dựa trên mật độ được dùng để:
+    \begin{enumerate}[label=\Alph*.]
+        \item Thay thế hoàn toàn K-means trong mọi trường hợp.
+        \item Sắp xếp các điểm để xác định cấu trúc phân cụm.
+        \item Phân cụm dữ liệu theo mô hình Gaussian.
+        \item Tính khoảng cách Jaccard giữa các cụm.
+    \end{enumerate}
+
+    \item Trong DBSCAN, nếu tăng giá trị $\varepsilon$ thì:
+    \begin{enumerate}[label=\Alph*.]
+        \item Số cụm tăng lên và số nhiễu tăng lên.
+        \item Số cụm giảm xuống và số nhiễu giảm xuống.
+        \item Số cụm không thay đổi.
+        \item Chỉ ảnh hưởng đến các border object.
+    \end{enumerate}
+
+    % --- MODEL-BASED ---
+    \item Phân cụm dựa trên mô hình (model-based) giả định rằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item Dữ liệu phân bố đều trong không gian.
+        \item Dữ liệu được sinh ra từ hỗn hợp các mô hình phân phối xác suất.
+        \item Tất cả cụm có kích thước bằng nhau.
+        \item Dữ liệu không có nhiễu.
+    \end{enumerate}
+
+    \item Trong thuật toán EM, \textbf{E-step} thực hiện:
+    \begin{enumerate}[label=\Alph*.]
+        \item Cập nhật tham số mô hình $\Theta_j = (\mu_j, \sigma_j)$.
+        \item Ước lượng xác suất mỗi đối tượng thuộc mỗi cụm.
+        \item Gán cứng mỗi đối tượng vào cụm gần nhất.
+        \item Tính khoảng cách Euclidean giữa các đối tượng.
+    \end{enumerate}
+
+    \item Trong thuật toán EM, \textbf{M-step} thực hiện:
+    \begin{enumerate}[label=\Alph*.]
+        \item Ước lượng xác suất thuộc cụm của mỗi đối tượng.
+        \item Khởi tạo ngẫu nhiên tâm cụm ban đầu.
+        \item Cực đại hóa hàm log-likelihood bằng cách cập nhật tham số mô hình.
+        \item Xóa bỏ các đối tượng nhiễu.
+    \end{enumerate}
+
+    \item So với K-means, thuật toán EM sử dụng:
+    \begin{enumerate}[label=\Alph*.]
+        \item Gán cứng (hard assignment) -- mỗi đối tượng thuộc đúng 1 cụm.
+        \item Gán mềm (soft assignment) -- mỗi đối tượng có xác suất thuộc mỗi cụm.
+        \item Khoảng cách Manhattan thay vì Euclidean.
+        \item Medoid thay vì mean làm tâm cụm.
+    \end{enumerate}
+
+    \item Thuật toán EM dừng khi:
+    \begin{enumerate}[label=\Alph*.]
+        \item Đã chạy đúng $k$ vòng lặp.
+        \item Đạt điều kiện hội tụ (ví dụ: log-likelihood không tăng thêm đáng kể).
+        \item Tất cả đối tượng có cùng xác suất thuộc mỗi cụm.
+        \item Số cụm tăng lên đến $n$.
+    \end{enumerate}
+
+    % --- FUZZY & KHÁC ---
+    \item Trong \textbf{phân cụm mờ (fuzzy clustering)}, Degree of Membership (DoM) của một đối tượng là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Luôn bằng 0 hoặc 1.
+        \item Một giá trị thực trong khoảng $[0, 1]$.
+        \item Một giá trị nguyên dương.
+        \item Luôn bằng $1/k$ với $k$ là số cụm.
+    \end{enumerate}
+
+    \item Điểm khác biệt chính giữa \textbf{phân cụm cứng} và \textbf{phân cụm mờ} là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Phân cụm cứng không cần xác định số cụm $k$.
+        \item Trong phân cụm mờ, một đối tượng có thể thuộc nhiều cụm với mức độ thành viên khác nhau.
+        \item Phân cụm cứng xử lý tốt hơn dữ liệu có ranh giới không rõ ràng.
+        \item Phân cụm mờ chỉ áp dụng được với dữ liệu nhị phân.
+    \end{enumerate}
+
+    % --- ĐÁNH GIÁ ---
+    \item Trong đánh giá kết quả phân cụm, \textbf{Entropy} càng nhỏ thì:
+    \begin{enumerate}[label=\Alph*.]
+        \item Cụm càng không thuần, kết quả càng tệ.
+        \item Cụm càng thuần, kết quả phân cụm càng tốt.
+        \item Số cụm càng ít.
+        \item Khoảng cách liên cụm càng nhỏ.
+    \end{enumerate}
+
+    \item \textbf{Silhouette index} được dùng trong:
+    \begin{enumerate}[label=\Alph*.]
+        \item External validation.
+        \item Internal validation.
+        \item Relative validation.
+        \item Không dùng trong đánh giá phân cụm.
+    \end{enumerate}
+
+    \item Thuật toán \textbf{ROCK} trong phân cụm phân cấp được thiết kế cho:
+    \begin{enumerate}[label=\Alph*.]
+        \item Dữ liệu có thang đo khoảng (interval-scaled).
+        \item Dữ liệu danh mục/rời rạc (categorical/discrete).
+        \item Dữ liệu phân phối Gaussian.
+        \item Dữ liệu nhị phân đối xứng.
+    \end{enumerate}
+
+    \item Phương pháp nào sau đây \textbf{không cần} xác định số cụm $k$ trước?
+    \begin{enumerate}[label=\Alph*.]
+        \item K-means.
+        \item PAM (k-medoids).
+        \item EM algorithm.
+        \item DBSCAN.
+    \end{enumerate}
+
+    \item Phương pháp phân cụm nào phù hợp nhất để phát hiện cụm có hình dạng bất kỳ (arbitrary shapes)?
+    \begin{enumerate}[label=\Alph*.]
+        \item K-means.
+        \item K-medoids (PAM).
+        \item DBSCAN.
+        \item EM algorithm.
+    \end{enumerate}
+
+    \item Chuẩn hóa Z-score trong xử lý thuộc tính có thang đo khoảng được thực hiện bằng công thức:
+    \begin{enumerate}[label=\Alph*.]
+        \item $z_{if} = \dfrac{x_{if}}{m_f}$
+        \item $z_{if} = \dfrac{x_{if} - m_f}{s_f}$
+        \item $z_{if} = x_{if} - \min_f$
+        \item $z_{if} = \dfrac{x_{if} - \min_f}{\max_f - \min_f}$
+    \end{enumerate}
+
+\end{enumerate}
+
+% ============================================================
+\newpage
+\section*{ĐÁP ÁN}
+% ============================================================
+
+\subsection*{Câu hỏi tự luận -- Hướng dẫn trả lời}
+
+\begin{singlespace}
+\begin{longtable}{|p{0.08\textwidth}|p{0.82\textwidth}|}
+\hline
+\textbf{Câu} & \textbf{Nội dung cần trình bày} \\
+\hline
+\endhead
+1 & Phân cụm là nhóm các đối tượng sao cho nội cụm tương đồng cao, liên cụm tương đồng thấp. Ứng dụng: phân nhóm khách hàng, phân tích mạng xã hội, phát hiện bất thường. \\
+\hline
+2 & Ma trận dữ liệu: $n \times p$ (đối tượng $\times$ thuộc tính). Ma trận bất tương đồng: $n \times n$ lưu $d(i,j)$. Điều kiện: $d(i,i)=0$; $d(i,j)=d(j,i)\geq 0$; bất đẳng thức tam giác. \\
+\hline
+3 & Euclidean ($q=2$), Manhattan ($q=1$), Minkowski ($q$ tùy ý). Nên chuẩn hóa (Z-score) khi các thuộc tính có đơn vị và biên độ khác nhau để tránh thiên vị. \\
+\hline
+4 & Simple distance (đối xứng) dùng khi cả hai giá trị 0 và 1 đều có ý nghĩa như nhau (ví dụ: giới tính). Jaccard (bất đối xứng) dùng khi giá trị ``0--0'' không có ý nghĩa (ví dụ: xét nghiệm y tế). \\
+\hline
+5 & (1) Chọn $k$ tâm ngẫu nhiên; (2) Gán đối tượng vào cụm gần nhất; (3) Cập nhật tâm cụm = mean; (4) Lặp đến khi tâm không đổi. Hàm mục tiêu: $\sum_{i=1}^k\sum_{x\in C_i}\text{dist}(x,r_i)^2$. \\
+\hline
+6 & Ưu: đơn giản, hiệu quả $O(nkt)$. Nhược: tối ưu cục bộ, nhạy cảm nhiễu, chỉ tạo cụm dạng cầu, cần chọn $k$. K-means không phù hợp non-convex vì tâm cụm là trung bình -- không nắm bắt được hình dạng phức tạp. \\
+\hline
+7 & AGNES: bottom-up, gộp từng bước. DIANA: top-down, tách từng bước. Ưu: không cần $k$, kết quả trực quan qua dendrogram. Nhược: không quay lại được, khó mở rộng. \\
+\hline
+8 & Single-linkage: khoảng cách ngắn nhất, có thể tạo chuỗi dài. Complete-linkage: khoảng cách dài nhất, tạo cụm compact hơn. \\
+\hline
+9 & Dendrogram là sơ đồ cây biểu diễn quá trình gộp/tách cụm. Cắt ngang dendrogram ở ngưỡng tương đồng nhất định để chọn số cụm. \\
+\hline
+10 & $\varepsilon$-neighborhood: vùng bán kính $\varepsilon$. Core: $|\varepsilon\text{-nhbd}|\geq$ MinPts. Directly density-reachable: bất đối xứng. Density-reachable: bắc cầu, bất đối xứng. Density-connected: đối xứng. \\
+\hline
+11 & DBSCAN: (1) xác định $\varepsilon$-neighborhood; (2) tạo cụm từ core object; (3) mở rộng theo density-reachable. Border: trong nhbd của core nhưng không phải core. Noise: không thuộc cụm nào. $\varepsilon$ nhỏ $\to$ nhiều nhiễu, $\varepsilon$ lớn $\to$ ít cụm. \\
+\hline
+12 & DBSCAN phát hiện hình dạng tùy ý, xử lý nhiễu tốt, không cần $k$; $O(n\log n)$--$O(n^2)$. K-means: chỉ hình cầu, nhạy nhiễu, cần $k$; $O(nkt)$. \\
+\hline
+13 & Model-based: tối ưu hóa khớp dữ liệu với mô hình phân phối xác suất (Gaussian). EM là thuật toán iterative tìm ML. Ưu: soft assignment, tổng quát hơn K-means. \\
+\hline
+14 & E-step: tính $P(x_i \in C_j|x_i)$ (xác suất thuộc cụm). M-step: cập nhật $\mu_j$, $\sigma_j$, $p_j$ để maximize log-likelihood. Khởi tạo: random. Dừng: khi log-likelihood hội tụ. \\
+\hline
+15 & Hard clustering: DoM $\in \{0,1\}$, ranh giới rõ. Fuzzy: DoM $\in [0,1]$, ranh giới mờ. Dùng fuzzy khi dữ liệu có ranh giới tự nhiên không rõ ràng (ví dụ: phân loại xe theo tốc độ và trọng lượng). \\
+\hline
+16 & Scalability, multi-type data, arbitrary shapes, ít tham số, xử lý nhiễu, incremental, interpretability. K-means: scalability, ít tham số. DBSCAN: arbitrary shapes, nhiễu. Hierarchical: không cần $k$. EM: interpretability. \\
+\hline
+17 & External: so với nhãn thực (Rand, Jaccard, Folkes-Mallows). Internal: dựa trên proximity matrix (Silhouette, Dunn's index). Relative: so sánh hiệu quả giữa các phương pháp. \\
+\hline
+18 & $\text{Entropy} = -\sum_i \frac{n_i}{n}\sum_j \frac{n_{ij}}{n_i}\log\frac{n_{ij}}{n_i}$. Entropy nhỏ = cụm thuần. Ví dụ: cụm có 12/12 đối tượng cùng lớp $\to$ entropy = 0 (hoàn hảo). \\
+\hline
+19 & $d(i,j) = \frac{\sum_f \delta_{ij}^{(f)} d_{ij}^{(f)}}{\sum_f \delta_{ij}^{(f)}}$. Khi $x_{if}$ hoặc $x_{jf}$ bị thiếu thì $\delta_{ij}^{(f)} = 0$ (bỏ qua thuộc tính đó). \\
+\hline
+20 & Phân cụm phân cấp khó mở rộng vì mỗi bước gộp phải đánh giá nhiều đối tượng. Giải pháp: divide-and-conquer, BIRCH -- dùng Clustering Feature (CF) tree để tóm tắt dữ liệu, cho phép phân cụm một lần qua (single scan) với bộ nhớ hạn chế. \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\subsection*{Câu hỏi trắc nghiệm -- Đáp án}
+
+\begin{singlespace}
+\begin{longtable}{|c|c||c|c||c|c||c|c|}
+\hline
+\textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} \\
+\hline
+\endhead
+1 & B & 11 & C & 21 & B & 31 & B \\
+\hline
+2 & B & 12 & B & 22 & C & 32 & B \\
+\hline
+3 & D & 13 & A & 23 & B & 33 & C \\
+\hline
+4 & B & 14 & B & 24 & B & 34 & B \\
+\hline
+5 & C & 15 & B & 25 & B & 35 & B \\
+\hline
+6 & B & 16 & A & 26 & B & 36 & B \\
+\hline
+7 & B & 17 & B & 27 & B & 37 & B \\
+\hline
+8 & B & 18 & C & 28 & B & 38 & B \\
+\hline
+9 & B & 19 & A & 29 & B & 39 & D \\
+\hline
+10 & C & 20 & B & 30 & A & 40 & B \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\subsection*{Giải thích đáp án trắc nghiệm}
+
+\begin{singlespace}
+\begin{longtable}{|p{0.06\textwidth}|p{0.84\textwidth}|}
+\hline
+\textbf{Câu} & \textbf{Giải thích} \\
+\hline
+\endhead
+1 & (B) -- Mục tiêu phân cụm: tối thiểu hóa khoảng cách nội cụm, tối đa hóa khoảng cách liên cụm. \\
+\hline
+2 & (B) -- Phân cụm là học không giám sát vì không có nhãn lớp trong quá trình học. \\
+\hline
+3 & (D) -- Điều kiện $d(i,j) = d(i,k) \cdot d(k,j)$ không phải điều kiện của ma trận bất tương đồng (đúng là bất đẳng thức tam giác). \\
+\hline
+4 & (B) -- Minkowski với $q=1$ là Manhattan distance. \\
+\hline
+5 & (C) -- Minkowski với $q=2$ là Euclidean distance. \\
+\hline
+6 & (B) -- Jaccard distance (asymmetric): $d(i,j) = (b+c)/(a+b+c)$, bỏ qua trường hợp cả hai bằng 0. \\
+\hline
+7 & (B) -- Cosine similarity $= 1$ khi hai vector cùng hướng (hoàn toàn giống nhau về hướng). \\
+\hline
+8 & (B) -- Internal validation dựa trên proximity matrix tính từ chính tập dữ liệu. \\
+\hline
+9 & (B) -- K-means dừng khi tâm cụm không thay đổi hoặc thay đổi dưới ngưỡng. \\
+\hline
+10 & (C) -- $O(nkt)$: $n$ đối tượng, $k$ cụm, $t$ vòng lặp. \\
+\hline
+11 & (C) -- K-means nhạy cảm với nhiễu và outliers vì dùng mean. \\
+\hline
+12 & (B) -- K-means tạo cụm dạng hình cầu với kích thước tương đối đều nhau. \\
+\hline
+13 & (A) -- PAM dùng medoid (đối tượng thực) thay vì mean, bền hơn với nhiễu. \\
+\hline
+14 & (B) -- Hàm mục tiêu K-means: tổng bình phương khoảng cách tới tâm cụm. \\
+\hline
+15 & (B) -- AGNES bắt đầu với mỗi đối tượng là một cụm riêng, sau đó gộp dần. \\
+\hline
+16 & (A) -- Hierarchical không cần xác định $k$ trước. \\
+\hline
+17 & (B) -- Single-linkage dùng khoảng cách ngắn nhất giữa hai đối tượng trong hai cụm. \\
+\hline
+18 & (C) -- Complete-linkage dùng khoảng cách dài nhất (maximum distance). \\
+\hline
+19 & (A) -- Dendrogram biểu diễn quá trình phân cụm phân cấp dạng cây. \\
+\hline
+20 & (B) -- BIRCH giải quyết vấn đề khả năng mở rộng (scalability) của phân cụm phân cấp. \\
+\hline
+21 & (B) -- Core object: số đối tượng trong $\varepsilon$-neighborhood $\geq$ MinPts. \\
+\hline
+22 & (C) -- Noise: đối tượng không thuộc bất kỳ cụm nào. \\
+\hline
+23 & (B) -- Density-reachable là quan hệ bất đối xứng (asymmetric). \\
+\hline
+24 & (B) -- Density-connected là quan hệ đối xứng (symmetric). \\
+\hline
+25 & (B) -- DBSCAN phát hiện cụm hình dạng tùy ý và xử lý nhiễu hiệu quả. \\
+\hline
+26 & (B) -- Độ phức tạp tốt nhất của DBSCAN là $O(n\log n)$. \\
+\hline
+27 & (B) -- OPTICS sắp xếp các điểm để xác định cấu trúc phân cụm. \\
+\hline
+28 & (B) -- Tăng $\varepsilon$: vùng lân cận rộng hơn $\to$ nhiều đối tượng được gộp $\to$ số cụm giảm, số nhiễu giảm. \\
+\hline
+29 & (B) -- Model-based giả định dữ liệu từ hỗn hợp các mô hình phân phối xác suất. \\
+\hline
+30 & (A) -- EM E-step: ước lượng (tính) xác suất thuộc cụm của mỗi đối tượng. \\
+\hline
+31 & (B) -- EM M-step: cực đại hóa log-likelihood bằng cách cập nhật tham số. \\
+\hline
+32 & (B) -- EM dùng soft assignment (gán mềm), K-means dùng hard assignment. \\
+\hline
+33 & (C) -- EM dừng khi đạt điều kiện hội tụ (log-likelihood không tăng đáng kể). \\
+\hline
+34 & (B) -- Fuzzy clustering: DoM $\in [0,1]$, một đối tượng có thể thuộc nhiều cụm. \\
+\hline
+35 & (B) -- Fuzzy: đối tượng thuộc nhiều cụm với mức độ thành viên khác nhau. \\
+\hline
+36 & (B) -- Entropy nhỏ $\to$ cụm thuần nhất (objects trong cùng cụm thuộc cùng lớp thực). \\
+\hline
+37 & (B) -- Silhouette index là độ đo internal validation. \\
+\hline
+38 & (B) -- ROCK xử lý dữ liệu thuộc tính danh mục/rời rạc. \\
+\hline
+39 & (D) -- DBSCAN không cần xác định $k$ trước; K-means, PAM, EM đều cần $k$. \\
+\hline
+40 & (B) -- Z-score: $z_{if} = (x_{if} - m_f)/s_f$ với $m_f$ là trung bình, $s_f$ là độ lệch tuyệt đối trung bình. \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\end{document}

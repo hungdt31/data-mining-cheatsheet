@@ -1,0 +1,243 @@
+name: Build & Publish LaTeX PDFs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "chapters/**"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+
+# Allow writing to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deployment at a time
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  # ────────────────────────────────────────────────────────────
+  # Job 1: compile each chapter in parallel
+  # ────────────────────────────────────────────────────────────
+  build:
+    name: Compile ${{ matrix.chapter }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chapter: [C1, C2, C3, C4, C5, C6]
+      fail-fast: false   # compile remaining chapters even if one fails
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compile ${{ matrix.chapter }}/main.tex
+        uses: xu-cheng/latex-action@v3
+        with:
+          working_directory: chapters/${{ matrix.chapter }}
+          root_file: main.tex
+          # pdflatex is required for Vietnamese babel + pslatex
+          latexmk_use_pdflatex: true
+          # pass TEXINPUTS so LaTeX can find shared files in chapters/
+          extra_system_packages: "py-pygments"
+        env:
+          TEXINPUTS: "..//:$TEXINPUTS"
+        continue-on-error: true   # template stubs (C1-C4) may be empty
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.chapter }}-pdf
+          # upload only if the PDF was produced
+          path: chapters/${{ matrix.chapter }}/main.pdf
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ────────────────────────────────────────────────────────────
+  # Job 2: assemble and deploy to GitHub Pages
+  # ────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all PDF artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Organize PDFs into deploy directory
+        run: |
+          mkdir -p dist/chapters
+
+          # copy each PDF with lower-case name, e.g. C5 → c5.pdf
+          for chapter in C1 C2 C3 C4 C5 C6; do
+            lower=$(echo "$chapter" | tr '[:upper:]' '[:lower:]')
+            src="artifacts/${chapter}-pdf/main.pdf"
+            if [ -f "$src" ]; then
+              cp "$src" "dist/chapters/${lower}.pdf"
+              echo "✓ ${chapter} → chapters/${lower}.pdf"
+            else
+              echo "✗ ${chapter} skipped (no PDF found)"
+            fi
+          done
+
+      - name: Generate index page
+        run: |
+          # collect chapters that actually have a PDF
+          CHAPTERS_JSON="["
+          first=true
+          for chapter in C1 C2 C3 C4 C5 C6; do
+            lower=$(echo "$chapter" | tr '[:upper:]' '[:lower:]')
+            if [ -f "dist/chapters/${lower}.pdf" ]; then
+              [ "$first" = false ] && CHAPTERS_JSON+=","
+              CHAPTERS_JSON+="\"${chapter}\""
+              first=false
+            fi
+          done
+          CHAPTERS_JSON+="]"
+
+          cat > dist/index.html << HTMLEOF
+          <!DOCTYPE html>
+          <html lang="vi">
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>Khai Phá Dữ Liệu – Tài liệu ôn tập</title>
+            <style>
+              *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+              body {
+                font-family: 'Segoe UI', system-ui, sans-serif;
+                background: #f4f6fb;
+                color: #222;
+                min-height: 100vh;
+              }
+              header {
+                background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+                color: #fff;
+                padding: 2.5rem 2rem 2rem;
+                text-align: center;
+              }
+              header h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: .02em; }
+              header p  { margin-top: .5rem; opacity: .85; font-size: .95rem; }
+              main {
+                max-width: 860px;
+                margin: 2.5rem auto;
+                padding: 0 1rem;
+              }
+              .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 1.25rem;
+              }
+              .card {
+                background: #fff;
+                border-radius: 10px;
+                box-shadow: 0 2px 8px rgba(0,0,0,.08);
+                padding: 1.5rem 1.25rem;
+                display: flex;
+                flex-direction: column;
+                gap: .75rem;
+                transition: transform .15s, box-shadow .15s;
+              }
+              .card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,.13); }
+              .card-badge {
+                display: inline-block;
+                background: #e8eaf6;
+                color: #3949ab;
+                font-weight: 700;
+                font-size: .8rem;
+                padding: .2rem .6rem;
+                border-radius: 999px;
+                width: fit-content;
+              }
+              .card-title { font-size: 1rem; font-weight: 600; line-height: 1.4; }
+              .card-link {
+                margin-top: auto;
+                display: inline-flex;
+                align-items: center;
+                gap: .4rem;
+                text-decoration: none;
+                color: #fff;
+                background: #3949ab;
+                padding: .5rem 1rem;
+                border-radius: 6px;
+                font-size: .88rem;
+                font-weight: 600;
+                transition: background .15s;
+              }
+              .card-link:hover { background: #1a237e; }
+              footer {
+                text-align: center;
+                padding: 2rem 1rem;
+                color: #888;
+                font-size: .82rem;
+              }
+            </style>
+          </head>
+          <body>
+            <header>
+              <h1>Khai Phá Dữ Liệu</h1>
+              <p>Tổng hợp kiến thức, câu hỏi tự luận &amp; trắc nghiệm theo từng chương</p>
+            </header>
+            <main>
+              <div class="grid" id="cards"></div>
+            </main>
+            <footer>
+              Auto-generated by GitHub Actions &nbsp;·&nbsp;
+              <a href="https://github.com/${{ github.repository }}">Source</a>
+            </footer>
+
+            <script>
+              const meta = {
+                C1: { title: "Giới thiệu về Khai Phá Dữ Liệu" },
+                C2: { title: "Tiền Xử Lý Dữ Liệu" },
+                C3: { title: "Phân Lớp Dữ Liệu (Classification)" },
+                C4: { title: "Hồi Quy và Dự Đoán (Regression)" },
+                C5: { title: "Phân Cụm Dữ Liệu (Clustering)" },
+                C6: { title: "Luật Kết Hợp và Thuật Toán Apriori" },
+              };
+              const available = ${CHAPTERS_JSON};
+              const grid = document.getElementById("cards");
+              available.forEach(ch => {
+                const info = meta[ch] || { title: ch };
+                const lower = ch.toLowerCase();
+                grid.innerHTML += \`
+                  <div class="card">
+                    <span class="card-badge">Chương \${ch.replace("C","")}</span>
+                    <div class="card-title">\${info.title}</div>
+                    <a class="card-link" href="chapters/\${lower}.pdf" target="_blank">
+                      📄 Xem PDF
+                    </a>
+                  </div>\`;
+              });
+              if (available.length === 0)
+                grid.innerHTML = '<p style="color:#888">Chưa có tài liệu nào được biên dịch.</p>';
+            </script>
+          </body>
+          </html>
+          HTMLEOF
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

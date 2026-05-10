@@ -1,0 +1,742 @@
+% Data Mining - Chapter 4: Data Classification
+\documentclass[10pt]{article}
+\input{../_preamble}
+
+\begin{document}
+\onehalfspacing
+\renewcommand{\arraystretch}{1.5}
+
+\newcommand{\ChapterNum}{4}
+\newcommand{\ChapterTitle}{PHÂN LỚP DỮ LIỆU (DATA CLASSIFICATION)}
+\input{../_title}
+
+% ============================================================
+\section{TỔNG QUAN VỀ PHÂN LỚP}
+% ============================================================
+
+\subsection{Định nghĩa và quy trình}
+
+\textbf{Phân lớp (Classification)} là phương pháp phân tích dữ liệu nhằm trích xuất mô hình mô tả các lớp dữ liệu. Đây là quy trình \textbf{hai bước}:
+\begin{enumerate}
+    \item \textbf{Huấn luyện (Training):} Xây dựng bộ phân lớp bằng cách học (analyzing) tập huấn luyện có nhãn $\langle X, y \rangle$.
+    \item \textbf{Phân lớp (Classification):} Phân lớp các mẫu/đối tượng mới. Nếu độ chính xác của bộ phân lớp chấp nhận được, dùng nó để phân lớp dữ liệu mới.
+\end{enumerate}
+
+\textbf{Đặc điểm:} Phân lớp là học \textbf{có giám sát (supervised learning)} -- có nhãn lớp trong dữ liệu huấn luyện.
+
+\textbf{Ví dụ tình huống:}
+\begin{itemize}
+    \item Email: ``spam'' hay ``not spam''.
+    \item Giao dịch trực tuyến: ``gian lận'' hay ``bình thường''.
+    \item Y tế: u bướu ``lành tính'' hay ``ác tính''; bệnh nhân ``mắc bệnh'' hay ``không mắc bệnh''.
+\end{itemize}
+
+\textbf{Các thuật toán phân lớp phổ biến:}
+\begin{itemize}
+    \item Logistic Regression, Decision Tree, Bayesian method, ANN, K-NN, Case-based reasoning, Genetic algorithms, Rough/Fuzzy sets.
+\end{itemize}
+
+% ============================================================
+\section{HỒI QUY LOGISTIC (LOGISTIC REGRESSION)}
+% ============================================================
+
+\subsection{Hàm Sigmoid}
+
+Hồi quy tuyến tính $h_\theta(X) = \theta^TX$ có thể cho kết quả $> 1$ hoặc $< 0$, không phù hợp cho phân lớp. Hồi quy Logistic đảm bảo $0 \leq h_\theta(X) \leq 1$ bằng hàm Sigmoid (Logistic function):
+
+\[
+h_\theta(X) = g(\theta^TX) = \frac{1}{1 + e^{-\theta^TX}}
+\]
+\[
+g(z) = \frac{1}{1 + e^{-z}}, \quad g(z) \in (0, 1)
+\]
+
+\textbf{Ý nghĩa:} $h_\theta(x) = P(y=1 \mid x; \theta)$ -- xác suất nhãn là 1 khi đầu vào là $x$.
+
+\subsection{Decision Boundary (Ranh giới quyết định)}
+
+\begin{itemize}
+    \item Dự đoán $y = 1$ khi $h_\theta(X) \geq 0.5 \Leftrightarrow \theta^TX \geq 0$.
+    \item Dự đoán $y = 0$ khi $h_\theta(X) < 0.5 \Leftrightarrow \theta^TX < 0$.
+\end{itemize}
+
+Decision boundary là tập $\{\theta^TX = 0\}$ -- có thể là đường thẳng (tuyến tính) hoặc đường cong (phi tuyến) tùy thuộc vào đặc trưng.
+
+\subsection{Hàm chi phí và Gradient Descent}
+
+Hàm chi phí logistic:
+\[
+\text{cost}(h_\theta(x), y) = \begin{cases}
+-\log(h_\theta(x)) & \text{nếu } y = 1 \\
+-\log(1 - h_\theta(x)) & \text{nếu } y = 0
+\end{cases}
+\]
+
+Rút gọn: $\text{cost}(h_\theta(x), y) = -y\log(h_\theta(x)) - (1-y)\log(1-h_\theta(x))$
+
+\[
+J(\theta) = \frac{1}{N}\sum_{i=1}^{N}\left[-y^{(i)}\log(h_\theta(x^{(i)})) - (1-y^{(i)})\log(1-h_\theta(x^{(i)}))\right]
+\]
+
+Tối thiểu hóa $J(\theta)$ bằng gradient descent (dạng công thức giống hồi quy tuyến tính sau khi lấy đạo hàm).
+
+\subsection{Phân lớp đa lớp -- One-vs-Rest}
+
+Với $k$ lớp, huấn luyện $k$ bộ phân lớp $h_\theta^{(i)}(x)$ ($i=1,\ldots,k$), mỗi bộ phân biệt lớp $i$ với tất cả lớp còn lại. Dự đoán lớp $i$ có $h_\theta^{(i)}(x)$ lớn nhất.
+
+% ============================================================
+\section{CÂY QUYẾT ĐỊNH (DECISION TREE)}
+% ============================================================
+
+\subsection{Cấu trúc và ý nghĩa}
+
+\begin{itemize}
+    \item \textbf{Internal node (Nút trong):} Kiểm tra một thuộc tính cụ thể.
+    \item \textbf{Branch (Nhánh):} Kết quả của phép kiểm tra.
+    \item \textbf{Leaf node (Nút lá):} Nhãn lớp.
+\end{itemize}
+
+\subsection{Thuật toán xây dựng cây quyết định}
+
+\textbf{Đặc điểm:} Greedy, divide-and-conquer, đệ quy, top-down. Độ phức tạp: $O(n \times |D| \times \log|D|)$.
+
+\textbf{Các thuật toán:} ID3, C4.5, CART (Classification and Regression Trees -- cây nhị phân).
+
+\subsection{Tiêu chí chọn thuộc tính phân tách}
+
+\paragraph{(a) Information Gain (ID3):}
+\[
+\text{Info}(D) = -\sum_{i=1}^{m} p_i \log_2(p_i), \quad p_i = |C_{i,D}|/|D|
+\]
+\[
+\text{Info}_A(D) = \sum_{j=1}^{v} \frac{|D_j|}{|D|} \text{Info}(D_j)
+\]
+\[
+\text{Gain}(A) = \text{Info}(D) - \text{Info}_A(D)
+\]
+Chọn thuộc tính có \textbf{Gain lớn nhất}. Hạn chế: ưu tiên thuộc tính có nhiều giá trị (tạo nhiều partition nhỏ).
+
+\paragraph{(b) Gain Ratio (C4.5):}
+\[
+\text{SplitInfo}_A(D) = -\sum_{j=1}^{v} \frac{|D_j|}{|D|} \log_2\frac{|D_j|}{|D|}
+\]
+\[
+\text{GainRatio}(A) = \frac{\text{Gain}(A)}{\text{SplitInfo}_A(D)}
+\]
+Chuẩn hóa Information Gain theo độ phân tách; giảm thiên vị với thuộc tính nhiều giá trị.
+
+\paragraph{(c) Gini Index (CART):}
+\[
+\text{Gini}(D) = 1 - \sum_{i=1}^{m} p_i^2
+\]
+\[
+\text{Gini}_A(D) = \frac{|D_1|}{|D|}\text{Gini}(D_1) + \frac{|D_2|}{|D|}\text{Gini}(D_2)
+\]
+Chia nhị phân; chọn thuộc tính và ngưỡng phân tách có \textbf{Gini nhỏ nhất}.
+
+% ============================================================
+\section{PHÂN LỚP BAYESIAN}
+% ============================================================
+
+\subsection{Định lý Bayes}
+
+\[
+P(H \mid X) = \frac{P(X \mid H) \cdot P(H)}{P(X)}
+\]
+
+\begin{itemize}
+    \item $P(H \mid X)$: xác suất hậu nghiệm (posterior) -- xác suất $X$ thuộc lớp $H$.
+    \item $P(X \mid H)$: likelihood -- xác suất quan sát $X$ nếu lớp là $H$.
+    \item $P(H)$: xác suất tiên nghiệm của lớp (prior).
+    \item $P(X)$: hằng số chuẩn hóa.
+\end{itemize}
+
+\subsection{Naive Bayesian Classification}
+
+Giả định \textbf{class conditional independence}: các thuộc tính độc lập với nhau trong cùng một lớp:
+\[
+P(X \mid C_i) = \prod_{k=1}^{n} P(x_k \mid C_i)
+\]
+
+\textbf{Phân lớp:} Chọn lớp $C_i$ có $P(C_i \mid X) \propto P(X \mid C_i) \cdot P(C_i)$ lớn nhất.
+
+\textbf{Tính $P(x_k \mid C_i)$:}
+\begin{itemize}
+    \item Thuộc tính danh mục: $P(x_k \mid C_i) = \frac{|\{X' \mid x'_k = x_k \wedge X' \in C_i\}|}{|C_{i,D}|}$
+    \item Thuộc tính liên tục (Gauss): $P(x_k \mid C_i) = \frac{1}{\sqrt{2\pi}\sigma_i} \exp\left(-\frac{(x_k - \mu_i)^2}{2\sigma_i^2}\right)$
+\end{itemize}
+
+\textbf{Vấn đề xác suất bằng 0:} Nếu $P(x_k \mid C_i) = 0$ thì $P(X \mid C_i) = 0$, gây ra ``zero-frequency problem''.
+
+\textbf{Giải pháp Laplace smoothing:}
+\[
+P(x_k \mid C_i) = \frac{|\{X' \mid x'_k = x_k \wedge X' \in C_i\}| + 1}{|C_{i,D}| + m}
+\]
+trong đó $m$ là số giá trị khác nhau của thuộc tính $A_k$.
+
+\textbf{Ưu/nhược điểm của Naive Bayes:}
+\begin{itemize}
+    \item Ưu: Dễ cài đặt, học nhanh, dễ hiểu kết quả, hiệu quả trong nhiều trường hợp.
+    \item Nhược: Giả định độc lập lớp điều kiện có thể không thỏa trong thực tế.
+\end{itemize}
+
+% ============================================================
+\section{MẠNG NƠRON NHÂN TẠO (ANN)}
+% ============================================================
+
+\subsection{Mô hình Neuron -- Logistic Unit}
+
+Mỗi neuron nhân tạo là một logistic unit với hàm kích hoạt Sigmoid $g(z)$:
+\[
+a^{(l)}_j = g\left(\sum_i \Theta^{(l-1)}_{ji} a^{(l-1)}_i\right)
+\]
+
+\subsection{Kiến trúc ANN}
+
+\begin{itemize}
+    \item \textbf{Layer 1:} Input layer (lớp đầu vào).
+    \item \textbf{Layer 2, ..., L-1:} Hidden layers (lớp ẩn).
+    \item \textbf{Layer L:} Output layer (lớp đầu ra).
+\end{itemize}
+
+Ma trận trọng số $\Theta^{(j)}$ có kích thước $s_{j+1} \times (s_j + 1)$ (với $s_j$ là số nút tại lớp $j$).
+
+\subsection{Feedforward (Forward Propagation)}
+
+Tính giá trị kích hoạt từ lớp đầu vào đến lớp đầu ra:
+\[
+z^{(l+1)} = \Theta^{(l)} a^{(l)}, \quad a^{(l+1)} = g(z^{(l+1)})
+\]
+(thêm bias node $a_0^{(l)} = 1$ tại mỗi lớp)
+
+\subsection{Hàm chi phí ANN}
+
+Phân lớp nhị phân ($K=1$):
+\[
+J(\Theta) = -\frac{1}{N}\sum_{i=1}^{N}\left[y^{(i)}\log h_\Theta(x^{(i)}) + (1-y^{(i)})\log(1-h_\Theta(x^{(i)}))\right]
+\]
+
+\subsection{Backpropagation}
+
+Thuật toán tính gradient để tối ưu hóa $J(\Theta)$:
+\begin{enumerate}
+    \item \textbf{Feedforward:} Tính $a^{(l)}$ cho tất cả các lớp.
+    \item \textbf{Tính lỗi:} $\delta^{(L)} = a^{(L)} - y$.
+    \item \textbf{Lan truyền ngược:} $\delta^{(l)} = (\Theta^{(l)})^T\delta^{(l+1)} \cdot g'(z^{(l)})$.
+    \item \textbf{Tính gradient:} $\frac{\partial J}{\partial \Theta^{(l)}_{ij}} = a^{(l)}_j \cdot \delta^{(l+1)}_i$.
+    \item Cập nhật $\Theta^{(l)}$ bằng gradient descent.
+\end{enumerate}
+
+% ============================================================
+\section{K-NEAREST NEIGHBOR (K-NN)}
+% ============================================================
+
+\textbf{Ý tưởng:} Phân lớp đối tượng $X$ bằng cách bỏ phiếu đa số (majority vote) từ $k$ đối tượng gần nhất trong tập huấn luyện.
+
+\textbf{Độ đo khoảng cách:} Thường dùng Euclidean: $d(p, q) = \sqrt{\sum_i (p_i - q_i)^2}$
+
+\textbf{Chọn $k$:}
+\begin{itemize}
+    \item $k$ quá nhỏ: nhạy cảm với nhiễu.
+    \item $k$ quá lớn: có thể chọn đối tượng từ lớp khác.
+    \item Gợi ý: $k \leq \sqrt{|D|}$.
+\end{itemize}
+
+% ============================================================
+\section{ĐÁNH GIÁ VÀ CHỌN MÔ HÌNH PHÂN LỚP}
+% ============================================================
+
+\subsection{Tiêu chí đánh giá}
+
+\begin{itemize}
+    \item \textbf{Accuracy:} Khả năng nhận dạng đúng các đối tượng.
+    \item \textbf{Speed:} Chi phí tính toán khi huấn luyện và sử dụng.
+    \item \textbf{Robustness:} Hoạt động tốt với dữ liệu nhiễu hoặc thiếu.
+    \item \textbf{Scalability:} Xây dựng và cập nhật bộ phân lớp với tập dữ liệu rất lớn.
+    \item \textbf{Interpretability:} Khả năng hiểu cách bộ phân lớp hoạt động.
+\end{itemize}
+
+\subsection{Precision, Recall và F-score}
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+ & \textbf{Thực tế: X} & \textbf{Thực tế: !X} \\
+\hline
+\textbf{Dự đoán: X} & TP & FP \\
+\hline
+\textbf{Dự đoán: !X} & FN & TN \\
+\hline
+\end{tabular}
+\end{center}
+
+\[
+\text{Precision} = \frac{TP}{TP + FP}, \quad \text{Recall} = \frac{TP}{TP + FN}
+\]
+\[
+\text{F-score} = \frac{2 \times P \times R}{P + R}
+\]
+
+\subsection{Phương pháp đánh giá}
+
+\begin{itemize}
+    \item \textbf{Holdout method:} Chia ngẫu nhiên $D$ thành tập train (2/3) và test (1/3).
+    \item \textbf{K-fold cross-validation:} Chia $D$ thành $k$ phần bằng nhau; lặp $k$ lần (dùng phần $i$ để test, phần còn lại để train); tính trung bình.
+\end{itemize}
+
+% ============================================================
+\section{TÓM TẮT}
+% ============================================================
+
+\begin{itemize}
+    \item \textbf{Phân lớp:} Học có giám sát; 2 bước: training + classification.
+    \item \textbf{Logistic Regression:} Sigmoid function; decision boundary; gradient descent; one-vs-rest đa lớp.
+    \item \textbf{Decision Tree (ID3/C4.5/CART):} Tiêu chí phân tách: Information Gain, Gain Ratio, Gini Index.
+    \item \textbf{Naive Bayes:} Định lý Bayes + giả định độc lập; Laplace smoothing cho zero-frequency.
+    \item \textbf{ANN:} Feedforward + Backpropagation; xử lý phi tuyến phức tạp.
+    \item \textbf{K-NN:} Lazy learning, dựa trên khoảng cách.
+    \item \textbf{Đánh giá:} Accuracy, Precision, Recall, F-score; Holdout, K-fold cross-validation.
+\end{itemize}
+
+% ============================================================
+\newpage
+\section{CÂU HỎI TỰ LUẬN}
+% ============================================================
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Câu \arabic*.}]
+
+    \item Phân lớp dữ liệu (Classification) là gì? Mô tả quy trình 2 bước của phân lớp và giải thích tại sao phân lớp là học có giám sát. So sánh với phân cụm (Clustering).
+
+    \item Giải thích tại sao hồi quy tuyến tính $h_\theta(X) = \theta^TX$ không phù hợp cho bài toán phân lớp. Hàm Sigmoid giải quyết vấn đề này như thế nào?
+
+    \item Trình bày hàm Sigmoid $g(z)$ và ý nghĩa của $h_\theta(x) = P(y=1 \mid x; \theta)$ trong hồi quy Logistic. Quy tắc quyết định phân lớp dựa trên $h_\theta(x)$ và $\theta^TX$ như thế nào?
+
+    \item Giải thích khái niệm \textbf{Decision Boundary} trong hồi quy Logistic. Khi nào thì ranh giới quyết định là đường thẳng? Khi nào là đường cong? Cho ví dụ cụ thể.
+
+    \item Trình bày hàm chi phí của hồi quy Logistic. Tại sao không dùng MSE như hồi quy tuyến tính? Giải thích ý nghĩa của từng trường hợp $y=1$ và $y=0$.
+
+    \item Giải thích phương pháp \textbf{One-vs-Rest} để phân lớp đa lớp bằng Logistic Regression. Mô tả quy trình huấn luyện và dự đoán. Hạn chế của phương pháp này?
+
+    \item Mô tả cấu trúc của \textbf{Decision Tree}. Giải thích các khái niệm: internal node, branch, leaf node. Thuật toán xây dựng cây quyết định có đặc điểm gì (greedy, divide-and-conquer)?
+
+    \item Trình bày và so sánh 3 tiêu chí chọn thuộc tính phân tách trong cây quyết định: \textbf{Information Gain}, \textbf{Gain Ratio} và \textbf{Gini Index}. Khi nào Gain Ratio tốt hơn Information Gain?
+
+    \item Tính Information Gain của thuộc tính ``age'' trong tập dữ liệu AllElectronics: $\text{Info}(D) = 0.940$, $\text{Info}_{\text{age}}(D) = 0.694$. Kết quả Gain(age) = 0.246. Giải thích ý nghĩa của con số này.
+
+    \item Trình bày \textbf{Định lý Bayes}. Giải thích các khái niệm: posterior probability, prior probability, likelihood, evidence. Tại sao phân lớp Bayesian dựa trên ``tối đa hóa posterior''?
+
+    \item Giải thích giả định \textbf{class conditional independence} trong Naive Bayes. Khi nào giả định này có thể không thỏa? Hệ quả khi giả định bị vi phạm là gì?
+
+    \item Trình bày \textbf{Laplace smoothing} trong Naive Bayes. Tại sao cần Laplace smoothing? Công thức điều chỉnh như thế nào? Có phương pháp thay thế nào không?
+
+    \item Mô tả kiến trúc \textbf{Mạng Nơron Nhân Tạo (ANN)}. Giải thích: input layer, hidden layers, output layer, weights matrix $\Theta^{(j)}$, kích thước của $\Theta^{(j)}$.
+
+    \item Trình bày thuật toán \textbf{Feedforward (Forward Propagation)} trong ANN. Vì sao cần thêm bias node $a_0^{(l)} = 1$ tại mỗi lớp?
+
+    \item Giải thích thuật toán \textbf{Backpropagation}. Mục đích của backpropagation là gì? Mô tả cách tính $\delta^{(L)}$, $\delta^{(L-1)}$ và gradient $\frac{\partial J}{\partial \Theta^{(l)}_{ij}}$.
+
+    \item Tại sao \textbf{ANN} được sử dụng cho bài toán phân lớp phi tuyến phức tạp mà Logistic Regression không xử lý được? Minh họa bằng ví dụ bài toán XOR.
+
+    \item Giải thích thuật toán \textbf{K-Nearest Neighbor (K-NN)}. Trình bày cách chọn $k$, độ đo khoảng cách và quy tắc bỏ phiếu đa số. Ưu và nhược điểm của K-NN?
+
+    \item Phân biệt \textbf{Precision} và \textbf{Recall}. Trong tình huống phát hiện gian lận thẻ tín dụng, tiêu chí nào quan trọng hơn? Tại sao cần F-score?
+
+    \item So sánh \textbf{Holdout method} và \textbf{K-fold cross-validation} để đánh giá bộ phân lớp. Phương pháp nào đáng tin cậy hơn và tại sao?
+
+    \item So sánh toàn diện 5 phương pháp phân lớp: Logistic Regression, Decision Tree, Naive Bayes, ANN và K-NN theo các tiêu chí: accuracy, speed, robustness, scalability và interpretability.
+
+\end{enumerate}
+
+% ============================================================
+\newpage
+\section{CÂU HỎI TRẮC NGHIỆM}
+% ============================================================
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Câu \arabic*.}]
+
+    \item Phân lớp (Classification) là loại học nào?
+    \begin{enumerate}[label=\Alph*.]
+        \item Học không giám sát.
+        \item Học có giám sát.
+        \item Học tăng cường.
+        \item Học bán giám sát.
+    \end{enumerate}
+
+    \item Hàm Sigmoid $g(z) = \frac{1}{1+e^{-z}}$ có miền giá trị:
+    \begin{enumerate}[label=\Alph*.]
+        \item $(-\infty, +\infty)$
+        \item $[0, 1]$ (nhưng không đạt đúng 0 hoặc 1, ngoại trừ giới hạn).
+        \item $[-1, 1]$
+        \item $[0.5, 1]$
+    \end{enumerate}
+
+    \item Trong Logistic Regression, dự đoán $y = 1$ khi:
+    \begin{enumerate}[label=\Alph*.]
+        \item $h_\theta(x) \geq 0.5 \Leftrightarrow \theta^Tx \geq 0$.
+        \item $h_\theta(x) < 0.5$.
+        \item $\theta^Tx < 0$.
+        \item $h_\theta(x) = 1$.
+    \end{enumerate}
+
+    \item $h_\theta(x) = P(y=1 \mid x; \theta) = 0.7$ có nghĩa là:
+    \begin{enumerate}[label=\Alph*.]
+        \item $70\%$ đối tượng thuộc lớp 0.
+        \item Xác suất $70\%$ đối tượng thuộc lớp 1 với đầu vào $x$.
+        \item Mô hình chính xác $70\%$.
+        \item $\theta^Tx = 0.7$.
+    \end{enumerate}
+
+    \item Hàm chi phí Logistic Regression khi $y=1$ và $h_\theta(x) \to 0$ sẽ:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tiến về 0 (cost nhỏ).
+        \item Tiến về vô cực (cost rất lớn -- phạt mạnh dự đoán sai).
+        \item Bằng 0.5.
+        \item Bằng $-\log(0.5)$.
+    \end{enumerate}
+
+    \item Phương pháp \textbf{One-vs-Rest} trong phân lớp đa lớp với $k$ lớp cần huấn luyện:
+    \begin{enumerate}[label=\Alph*.]
+        \item 1 bộ phân lớp.
+        \item $k-1$ bộ phân lớp.
+        \item $k$ bộ phân lớp.
+        \item $k(k-1)/2$ bộ phân lớp.
+    \end{enumerate}
+
+    \item Trong Decision Tree, \textbf{Leaf node} chứa:
+    \begin{enumerate}[label=\Alph*.]
+        \item Điều kiện kiểm tra thuộc tính.
+        \item Nhãn lớp (class label).
+        \item Tập con của dữ liệu huấn luyện.
+        \item Hệ số Gini Index.
+    \end{enumerate}
+
+    \item Information Gain $\text{Gain}(A) = \text{Info}(D) - \text{Info}_A(D)$ là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Lượng thông tin cần thiết để phân lớp sau khi dùng thuộc tính A.
+        \item Phần giảm entropy khi biết thuộc tính A (lớn hơn là tốt hơn).
+        \item Độ đo Gini của phân hoạch.
+        \item Xác suất thuộc tính A được chọn làm nút gốc.
+    \end{enumerate}
+
+    \item Thuật toán cây quyết định nào sử dụng \textbf{Gain Ratio}?
+    \begin{enumerate}[label=\Alph*.]
+        \item ID3.
+        \item C4.5.
+        \item CART.
+        \item K-NN.
+    \end{enumerate}
+
+    \item Gini Index \textbf{nhỏ hơn} tương ứng với:
+    \begin{enumerate}[label=\Alph*.]
+        \item Partition có độ hỗn loạn cao hơn (impure).
+        \item Partition thuần hơn (các đối tượng chủ yếu thuộc một lớp).
+        \item Thuộc tính phân tách kém hơn.
+        \item Entropy lớn hơn.
+    \end{enumerate}
+
+    \item CART (Classification and Regression Trees) đặc điểm là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Cây đa phân (multiple branches per node).
+        \item Cây nhị phân (binary split); sử dụng Gini Index.
+        \item Cây nhị phân; sử dụng Information Gain.
+        \item Cây đa phân; sử dụng Gain Ratio.
+    \end{enumerate}
+
+    \item Trong Naive Bayes, giả định \textbf{class conditional independence} nghĩa là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tất cả các lớp có xác suất bằng nhau.
+        \item Các thuộc tính độc lập với nhau trong cùng một lớp.
+        \item Các lớp độc lập với nhau.
+        \item Thuộc tính liên tục và danh mục được xử lý giống nhau.
+    \end{enumerate}
+
+    \item \textbf{Laplace smoothing} trong Naive Bayes giải quyết:
+    \begin{enumerate}[label=\Alph*.]
+        \item Vấn đề dữ liệu thiếu (missing data).
+        \item Vấn đề xác suất bằng 0 (zero-frequency problem).
+        \item Vấn đề giả định độc lập bị vi phạm.
+        \item Vấn đề chiều cao (high dimensionality).
+    \end{enumerate}
+
+    \item Công thức Laplace smoothing: $P(x_k \mid C_i) = \frac{\text{count} + 1}{|C_{i,D}| + m}$, trong đó $m$ là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Số lớp trong tập dữ liệu.
+        \item Số giá trị khác nhau của thuộc tính $A_k$.
+        \item Số mẫu trong tập huấn luyện.
+        \item Số thuộc tính của đối tượng.
+    \end{enumerate}
+
+    \item Trong ANN, ma trận trọng số $\Theta^{(j)}$ ánh xạ:
+    \begin{enumerate}[label=\Alph*.]
+        \item Từ lớp $j+1$ về lớp $j$.
+        \item Từ lớp $j$ sang lớp $j+1$.
+        \item Từ lớp đầu vào trực tiếp đến lớp đầu ra.
+        \item Từ lớp ẩn sang lớp đầu vào.
+    \end{enumerate}
+
+    \item Kích thước của $\Theta^{(j)}$ trong ANN với $s_j$ nút tại lớp $j$ và $s_{j+1}$ nút tại lớp $j+1$ là:
+    \begin{enumerate}[label=\Alph*.]
+        \item $s_j \times s_{j+1}$
+        \item $s_{j+1} \times (s_j + 1)$ (bao gồm bias)
+        \item $(s_j + 1) \times s_{j+1}$
+        \item $s_j \times (s_{j+1} + 1)$
+    \end{enumerate}
+
+    \item Trong Backpropagation, $\delta^{(l)}_j$ biểu diễn:
+    \begin{enumerate}[label=\Alph*.]
+        \item Giá trị kích hoạt của neuron $j$ tại lớp $l$.
+        \item Sai số (error) tạo ra bởi neuron $j$ tại lớp $l$.
+        \item Trọng số kết nối của neuron $j$ tại lớp $l$.
+        \item Giá trị gradient của $J$ theo $\Theta^{(l)}_{ij}$.
+    \end{enumerate}
+
+    \item K-NN phân lớp đối tượng mới bằng cách:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tính xác suất thuộc mỗi lớp theo Bayes.
+        \item Bỏ phiếu đa số từ $k$ đối tượng gần nhất trong tập huấn luyện.
+        \item Xây dựng cây quyết định từ tập huấn luyện.
+        \item Tính sigmoid của $\theta^Tx$.
+    \end{enumerate}
+
+    \item Khi $k$ trong K-NN quá nhỏ, bộ phân lớp sẽ:
+    \begin{enumerate}[label=\Alph*.]
+        \item Ổn định hơn với nhiễu.
+        \item Nhạy cảm hơn với nhiễu (overfitting).
+        \item Có xu hướng phân lớp sai do chọn quá nhiều lớp.
+        \item Không bị ảnh hưởng bởi $k$.
+    \end{enumerate}
+
+    \item Giá trị $k$ được gợi ý trong slide C4 là:
+    \begin{enumerate}[label=\Alph*.]
+        \item $k = 1$
+        \item $k \leq \sqrt{|D|}$
+        \item $k = 10$
+        \item $k = |D| / 2$
+    \end{enumerate}
+
+    \item Precision được tính bằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item $TP / (TP + FN)$
+        \item $TP / (TP + FP)$
+        \item $TN / (TN + FP)$
+        \item $(TP + TN) / (TP + FP + FN + TN)$
+    \end{enumerate}
+
+    \item Recall được tính bằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item $TP / (TP + FP)$
+        \item $TP / (TP + FN)$
+        \item $FP / (FP + TN)$
+        \item $TN / (TN + FN)$
+    \end{enumerate}
+
+    \item F-score được tính bằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item $(P + R) / 2$
+        \item $2PR / (P + R)$
+        \item $\sqrt{P \times R}$
+        \item $P \times R$
+    \end{enumerate}
+
+    \item Với dataset 13 flows (9 BG và 4 FG), bộ phân lớp xác định 7 flows là BG (4 BG đúng và 3 FG sai). Precision và Recall của lớp BG lần lượt là:
+    \begin{enumerate}[label=\Alph*.]
+        \item P = 4/9, R = 4/7.
+        \item P = 4/7, R = 4/9.
+        \item P = 4/13, R = 4/7.
+        \item P = 4/7, R = 4/13.
+    \end{enumerate}
+
+    \item Thuật toán cây quyết định nào sử dụng \textbf{Information Gain} và phù hợp với thuộc tính danh mục?
+    \begin{enumerate}[label=\Alph*.]
+        \item C4.5.
+        \item CART.
+        \item ID3.
+        \item Naive Bayes.
+    \end{enumerate}
+
+    \item Trong ANN, lớp đầu vào $L=1$ chứa:
+    \begin{enumerate}[label=\Alph*.]
+        \item Kết quả dự đoán.
+        \item Các đặc trưng đầu vào $x_1, \ldots, x_n$ (và bias $x_0 = 1$).
+        \item Các trọng số $\Theta$.
+        \item Giá trị delta (lỗi) của mỗi neuron.
+    \end{enumerate}
+
+    \item $\text{Info}(D) = -\sum_{i=1}^{m} p_i \log_2 p_i$ bằng \textbf{0} khi:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tất cả đối tượng phân bổ đều giữa các lớp.
+        \item Tất cả đối tượng thuộc cùng một lớp (partition thuần nhất).
+        \item $m = 2$ lớp.
+        \item $|D| = 1$.
+    \end{enumerate}
+
+    \item Bộ phân lớp nào \textbf{dễ giải thích nhất} (highest interpretability)?
+    \begin{enumerate}[label=\Alph*.]
+        \item ANN với nhiều hidden layers.
+        \item K-NN.
+        \item Decision Tree.
+        \item Logistic Regression với nhiều biến.
+    \end{enumerate}
+
+    \item Ưu điểm chính của ANN so với Decision Tree là:
+    \begin{enumerate}[label=\Alph*.]
+        \item ANN dễ hiểu và giải thích hơn.
+        \item ANN xử lý tốt hơn các bài toán phân lớp phi tuyến phức tạp với dữ liệu chiều cao.
+        \item ANN cần ít dữ liệu huấn luyện hơn.
+        \item ANN huấn luyện nhanh hơn với mọi loại dữ liệu.
+    \end{enumerate}
+
+    \item Tiêu chí \textbf{Scalability} trong đánh giá bộ phân lớp quan tâm đến:
+    \begin{enumerate}[label=\Alph*.]
+        \item Khả năng bộ phân lớp hiểu được kết quả.
+        \item Khả năng xây dựng và cập nhật bộ phân lớp với tập dữ liệu rất lớn.
+        \item Khả năng phân lớp đúng các đối tượng nhiễu.
+        \item Tốc độ dự đoán trên tập test.
+    \end{enumerate}
+
+    \item Trong quy trình phân lớp 2 bước, bước \textbf{Evaluation} được thực hiện ở:
+    \begin{enumerate}[label=\Alph*.]
+        \item Chỉ ở bước Training.
+        \item Ở đầu bước Classification (dùng testing dataset để đánh giá trước khi áp dụng).
+        \item Sau khi đã phân lớp tất cả dữ liệu mới.
+        \item Không cần thực hiện evaluation nếu training dataset đủ lớn.
+    \end{enumerate}
+
+    \item Phương trình $h_\theta(x) = g(\theta_0 + \theta_1 x_1^2 + \theta_2 x_2^2)$ tạo ra decision boundary dạng:
+    \begin{enumerate}[label=\Alph*.]
+        \item Đường thẳng.
+        \item Đường tròn (hoặc elipse).
+        \item Đường hyperbola.
+        \item Không thể xác định.
+    \end{enumerate}
+
+    \item Trong K-fold cross-validation, tổng số lần một mẫu dữ liệu được dùng để test là:
+    \begin{enumerate}[label=\Alph*.]
+        \item $k$ lần.
+        \item 1 lần.
+        \item $k-1$ lần.
+        \item $1/k$ lần.
+    \end{enumerate}
+
+    \item Trong Naive Bayes, $P(C_i) = |C_{i,D}| / |D|$ biểu diễn:
+    \begin{enumerate}[label=\Alph*.]
+        \item Likelihood (xác suất quan sát $X$ nếu lớp là $C_i$).
+        \item Prior probability (xác suất tiên nghiệm của lớp $C_i$).
+        \item Posterior probability (xác suất hậu nghiệm).
+        \item Evidence (hằng số chuẩn hóa).
+    \end{enumerate}
+
+    \item ANN được lấy cảm hứng từ:
+    \begin{enumerate}[label=\Alph*.]
+        \item Hệ thống điều khiển robot.
+        \item Cấu trúc và hoạt động của não người.
+        \item Cấu trúc cây quyết định phân cấp.
+        \item Lý thuyết tập mờ (Fuzzy sets).
+    \end{enumerate}
+
+    \item Khi Naive Bayes gặp vấn đề $P(x_k \mid C_i) = 0$ mà không dùng Laplace smoothing thì:
+    \begin{enumerate}[label=\Alph*.]
+        \item Chỉ ảnh hưởng đến thuộc tính đó.
+        \item Toàn bộ $P(X \mid C_i) = 0$, loại bỏ hoàn toàn lớp $C_i$ khỏi xét.
+        \item Tăng xác suất của các lớp khác.
+        \item Không ảnh hưởng nếu có đủ thuộc tính khác.
+    \end{enumerate}
+
+    \item Trong đánh giá mô hình phân lớp, độ đo \textbf{Accuracy} có hạn chế khi:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tập test quá nhỏ.
+        \item Dữ liệu mất cân bằng lớp (class imbalance), ví dụ 99\% lớp A và 1\% lớp B.
+        \item Số lớp lớn hơn 2.
+        \item Bộ phân lớp sử dụng gradient descent.
+    \end{enumerate}
+
+\end{enumerate}
+
+% ============================================================
+\newpage
+\section*{ĐÁP ÁN}
+% ============================================================
+
+\subsection*{Câu hỏi tự luận -- Hướng dẫn trả lời}
+
+\begin{singlespace}
+\begin{longtable}{|p{0.08\textwidth}|p{0.82\textwidth}|}
+\hline
+\textbf{Câu} & \textbf{Nội dung cần trình bày} \\
+\hline
+\endhead
+1 & Classification: xây dựng hàm $f(X) = y$ từ dữ liệu có nhãn. Bước 1: Training (học mô hình từ $\langle X, y \rangle$). Bước 2: Classification (phân lớp dữ liệu mới). Supervised vì có nhãn. Khác clustering: clustering không có nhãn, tự tìm nhóm. \\
+\hline
+2 & Hồi quy tuyến tính: $h_\theta(X)$ có thể $> 1$ hoặc $< 0$ $\Rightarrow$ không phải xác suất. Sigmoid: $g(z) = 1/(1+e^{-z}) \in (0,1)$ $\Rightarrow$ đảm bảo $0 \leq h_\theta \leq 1$, có thể diễn giải là xác suất. \\
+\hline
+3 & $h_\theta(x) = g(\theta^Tx) \in (0,1)$. Ý nghĩa: $P(y=1|x;\theta)$. Quy tắc: dự đoán $y=1$ khi $h_\theta(x) \geq 0.5 \Leftrightarrow \theta^Tx \geq 0$; dự đoán $y=0$ khi ngược lại. \\
+\hline
+4 & Decision boundary là tập $\{\theta^Tx = 0\}$. Đường thẳng khi đặc trưng tuyến tính $\theta_0 + \theta_1 x_1 + \theta_2 x_2 = 0$. Đường cong khi thêm đặc trưng bậc cao: $\theta_0 + \theta_1 x_1^2 + \theta_2 x_2^2 = 0$ $\Rightarrow$ đường tròn. \\
+\hline
+5 & Dùng log-loss thay MSE vì: MSE với sigmoid cho $J$ không lồi (nhiều cực tiểu cục bộ). Log-loss: $y=1, h \to 0$: cost $\to \infty$ (phạt mạnh); $y=1, h=1$: cost $= 0$. Tương tự $y=0$. \\
+\hline
+6 & One-vs-Rest: với $k$ lớp, huấn luyện $k$ bộ phân lớp $h_\theta^{(i)}$, mỗi cái phân biệt lớp $i$ vs. tất cả còn lại. Dự đoán: lớp $i = \arg\max_i h_\theta^{(i)}(x)$. Hạn chế: không xét đồng thời tất cả lớp. \\
+\hline
+7 & Internal node: test thuộc tính (ví dụ: age $\leq 30$). Branch: kết quả test. Leaf: nhãn lớp. Thuật toán: greedy (chọn thuộc tính tốt nhất tại mỗi nút, không quay lại), divide-and-conquer, đệ quy, top-down. \\
+\hline
+8 & Information Gain: đo giảm entropy; có thể ưu tiên thuộc tính nhiều giá trị (bad). Gain Ratio: chuẩn hóa bằng SplitInfo $\Rightarrow$ khắc phục thiên vị của IG; dùng khi thuộc tính có nhiều giá trị. Gini: phân tách nhị phân, đơn giản hơn. \\
+\hline
+9 & Gain(age) = 0.940 - 0.694 = 0.246 bits. Nghĩa: Khi biết thuộc tính ``age'', lượng thông tin cần thêm để phân lớp giảm 0.246 bits. Để so sánh với Gain(income), Gain(student), Gain(credit\_rating) để chọn thuộc tính phân tách. \\
+\hline
+10 & Bayes: $P(H|X) = P(X|H)P(H)/P(X)$. Posterior: xác suất thuộc lớp sau khi quan sát $X$. Prior: xác suất lớp trước khi quan sát. Likelihood: xác suất quan sát $X$ nếu lớp là $H$. Phân lớp tối đa hóa posterior để chọn lớp có khả năng cao nhất. \\
+\hline
+11 & Giả định: $P(X|C_i) = \prod_k P(x_k|C_i)$ -- các thuộc tính độc lập trong mỗi lớp. Không thỏa khi: thuộc tính có tương quan (ví dụ: chiều cao và cân nặng). Hệ quả: xác suất tính toán không phản ánh đúng thực tế, có thể cho kết quả sai. \\
+\hline
+12 & Zero-frequency: $P(x_k|C_i) = 0$ khi giá trị $x_k$ chưa gặp trong lớp $C_i$ trong training $\Rightarrow$ $P(X|C_i) = 0$, loại bỏ lớp sai. Laplace: thêm 1 vào tử, $m$ vào mẫu. Thay thế: z-estimate: $P = (\text{count} + zP(x_k))/(|C_i| + z)$. \\
+\hline
+13 & Layer 1: input ($x_1, \ldots, x_n$). Hidden layers: xử lý phi tuyến. Layer L: output. $\Theta^{(j)}$: ma trận trọng số từ lớp $j$ sang $j+1$; kích thước $s_{j+1} \times (s_j + 1)$ (bias node thêm 1 vào $s_j$). \\
+\hline
+14 & Feedforward: $z^{(l+1)} = \Theta^{(l)} a^{(l)}$; $a^{(l+1)} = g(z^{(l+1)})$; thêm $a_0^{(l)}=1$ tại mỗi lớp. Bias node cần thiết để cho phép dịch chuyển (shift) decision boundary, tương tự intercept $\theta_0$ trong hồi quy. \\
+\hline
+15 & Backprop tính gradient $\partial J/\partial \Theta^{(l)}$. $\delta^{(L)} = a^{(L)} - y$ (lỗi output). $\delta^{(l)} = (\Theta^{(l)})^T\delta^{(l+1)} \cdot g'(z^{(l)})$ (lan truyền ngược). $\frac{\partial J}{\partial \Theta^{(l)}_{ij}} = a_j^{(l)}\delta_i^{(l+1)}$. Cập nhật $\Theta$ bằng gradient descent. \\
+\hline
+16 & XOR không phân tách tuyến tính được. ANN: có thể biểu diễn NAND $\to$ tổ hợp $\to$ XOR. ANN học các đặc trưng phi tuyến qua hidden layers, tạo ra biên phân lớp phức tạp. Logistic Regression chỉ tạo ra biên tuyến tính. \\
+\hline
+17 & K-NN: tính khoảng cách từ $X$ đến tất cả điểm trong $D$; chọn $k$ điểm gần nhất; dự đoán lớp có nhiều phiếu nhất. Chọn $k$: $k \leq \sqrt{|D|}$. Ưu: đơn giản. Nhược: tốn bộ nhớ, tính khoảng cách chậm khi $|D|$ lớn (lazy learner). \\
+\hline
+18 & Precision: trong số dự đoán là X, bao nhiêu phần đúng. Recall: trong số thực sự là X, bao nhiêu phần được phát hiện. Phát hiện gian lận: Recall quan trọng hơn (không bỏ sót gian lận thật). F-score cân bằng cả hai. \\
+\hline
+19 & Holdout: chia 1 lần, kết quả phụ thuộc cách chia. K-fold: chia $k$ lần, tính trung bình $\Rightarrow$ đáng tin cậy hơn vì ít phụ thuộc cách chia dữ liệu; tận dụng toàn bộ dữ liệu vừa train vừa test. \\
+\hline
+20 & Logistic Reg: accuracy trung bình, nhanh, ổn định, interpretable. Decision Tree: tốt với dữ liệu danh mục, nhanh, interpretable tốt. Naive Bayes: nhanh, ít dữ liệu, giả định độc lập. ANN: accuracy cao nhất (phi tuyến), chậm, kém interpretable. K-NN: accuracy tốt, chậm với data lớn, tốn bộ nhớ. \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\subsection*{Câu hỏi trắc nghiệm -- Đáp án}
+
+\begin{singlespace}
+\begin{longtable}{|c|c||c|c||c|c||c|c|}
+\hline
+\textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} \\
+\hline
+\endhead
+1 & B & 11 & B & 21 & B & 31 & C \\
+\hline
+2 & B & 12 & B & 22 & B & 32 & B \\
+\hline
+3 & A & 13 & B & 23 & B & 33 & B \\
+\hline
+4 & B & 14 & B & 24 & B & 34 & B \\
+\hline
+5 & B & 15 & B & 25 & C & 35 & B \\
+\hline
+6 & C & 16 & B & 26 & B & 36 & B \\
+\hline
+7 & B & 17 & B & 27 & B & 37 & B \\
+\hline
+8 & B & 18 & B & 28 & C & 38 & B \\
+\hline
+9 & B & 19 & B & 29 & C & 39 & B \\
+\hline
+10 & B & 20 & B & 30 & B & 40 & B \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\end{document}

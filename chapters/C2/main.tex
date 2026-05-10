@@ -1,0 +1,663 @@
+% Data Mining - Chapter 2: Data Preprocessing
+\documentclass[10pt]{article}
+\input{../_preamble}
+
+\begin{document}
+\onehalfspacing
+\renewcommand{\arraystretch}{1.5}
+
+\newcommand{\ChapterNum}{2}
+\newcommand{\ChapterTitle}{TIỀN XỬ LÝ DỮ LIỆU (DATA PREPROCESSING)}
+\input{../_title}
+
+% ============================================================
+\section{GIỚI THIỆU VỀ TIỀN XỬ LÝ DỮ LIỆU}
+% ============================================================
+
+\subsection{Tại sao cần tiền xử lý dữ liệu?}
+
+Dữ liệu thực tế thường \textbf{không hoàn hảo}: thiếu giá trị (NULL), không nhất quán (inconsistent), có nhiễu (noisy), lỗi định dạng. Tiền xử lý dữ liệu là các bước xử lý dữ liệu gốc để \textbf{nâng cao chất lượng dữ liệu}, từ đó nâng cao chất lượng kết quả khai phá.
+
+\subsection{Các tiêu chí chất lượng dữ liệu}
+
+\begin{itemize}
+    \item \textbf{Accuracy (Tính chính xác):} Giá trị thực/đúng được ghi lại.
+    \item \textbf{Currency/Timeliness (Tính cập nhật):} Dữ liệu có sẵn và còn hiệu lực tại thời điểm cần dùng.
+    \item \textbf{Completeness (Tính đầy đủ):} Tất cả giá trị cho mọi thuộc tính đều được ghi lại.
+    \item \textbf{Consistency (Tính nhất quán):} Tất cả dữ liệu cùng loại được biểu diễn theo cùng một cách/định dạng.
+\end{itemize}
+
+\subsection{Các kỹ thuật tiền xử lý chính}
+
+\begin{enumerate}
+    \item \textbf{Data Cleaning (Làm sạch):} Xử lý dữ liệu thiếu, loại bỏ nhiễu và sửa không nhất quán.
+    \item \textbf{Data Integration (Tích hợp):} Kết hợp dữ liệu từ nhiều nguồn thành Data Warehouse.
+    \item \textbf{Data Transformation (Biến đổi):} Chuẩn hóa, tổng hợp, tổng quát hóa.
+    \item \textbf{Data Reduction (Rút gọn):} Giảm kích thước dữ liệu nhưng giữ nguyên thông tin.
+    \item \textbf{Data Discretization (Rời rạc hóa):} Chuyển đổi thuộc tính liên tục thành khoảng rời rạc.
+\end{enumerate}
+
+% ============================================================
+\section{MÔ TẢ VÀ TÓM TẮT DỮ LIỆU}
+% ============================================================
+
+\subsection{Độ đo xu hướng trung tâm}
+
+\begin{itemize}
+    \item \textbf{Mean (Trung bình):} $\bar{x} = \frac{1}{N}\sum_{i=1}^{N} x_i$
+    \item \textbf{Weighted arithmetic mean:} $\bar{x} = \frac{\sum w_i x_i}{\sum w_i}$
+    \item \textbf{Median (Trung vị):} Giá trị giữa trong dữ liệu đã sắp xếp.
+    \item \textbf{Mode (Yếu vị):} Giá trị xuất hiện nhiều nhất.
+    \item \textbf{Midrange (Trung điểm):} $\frac{\max + \min}{2}$
+\end{itemize}
+
+\subsection{Độ đo phân tán}
+
+\begin{itemize}
+    \item \textbf{Quartiles (Tứ phân vị):} Q1 (25th percentile), Q2 = Median (50th), Q3 (75th).
+    \item \textbf{IQR (Khoảng tứ phân vị):} $\text{IQR} = Q3 - Q1$.
+    \item \textbf{Xác định ngoại lệ:} $\geq Q3 + 1.5 \times \text{IQR}$ hoặc $\leq Q1 - 1.5 \times \text{IQR}$.
+    \item \textbf{Extreme outlier:} $\geq Q3 + 3 \times \text{IQR}$ hoặc $\leq Q1 - 3 \times \text{IQR}$.
+    \item \textbf{Variance (Phương sai):} $\sigma^2 = \frac{1}{N}\sum_{i=1}^{N}(x_i - \bar{x})^2$
+    \item \textbf{Standard deviation:} $\sigma = \sqrt{\sigma^2}$
+\end{itemize}
+
+\textbf{Phân phối lệch:} Nếu Mean $<$ Mode thì dữ liệu lệch âm (negatively skewed); ngược lại lệch dương.
+
+% ============================================================
+\section{LÀM SẠCH DỮ LIỆU}
+% ============================================================
+
+\subsection{Xử lý dữ liệu thiếu}
+
+\paragraph{Nguyên nhân:} 
+
+\begin{itemize}
+    \item Khách quan (dữ liệu không tồn tại, lỗi hệ thống).
+    \item Chủ quan (lỗi con người).
+\end{itemize}
+
+\paragraph{Giải pháp:}
+\begin{itemize}
+    \item Không sử dụng bản ghi thiếu (ignore/delete).
+    \item Cập nhật thủ công.
+    \item Thay thế tự động: hằng số toàn cục, giá trị thường gặp (mode), giá trị trung bình (local/global mean), giá trị dự đoán (từ hồi quy/phân lớp).
+    \item Phòng ngừa ngay từ thiết kế: ràng buộc toàn vẹn CSDL.
+\end{itemize}
+
+\subsection{Phát hiện ngoại lệ và loại bỏ nhiễu}
+
+\paragraph{Dữ liệu bất thường:}
+\begin{itemize}
+\item \textbf{Ngoại lệ (Outlier):} Đối tượng không tuân theo đặc tính chung của tập dữ liệu.
+
+\item \textbf{Nhiễu (Noise):} Các ngoại lệ bị loại bỏ/không được chấp nhận.
+\end{itemize}
+
+\paragraph{Phương pháp phát hiện ngoại lệ:}
+\begin{itemize}
+    \item \textbf{Statistical distribution-based:} Dựa trên phân phối thống kê (IQR rule).
+    \item \textbf{Distance-based:} Dựa trên khoảng cách tới các điểm lân cận.
+    \item \textbf{Density-based:} Vùng thưa thớt được coi là ngoại lệ.
+    \item \textbf{Deviation-based:} So sánh với đặc tính tổng quát của nhóm.
+\end{itemize}
+
+\paragraph{Phương pháp loại bỏ nhiễu (Noise Removal):}
+\begin{itemize}
+    \item \textbf{Binning:} Sắp xếp dữ liệu vào các bin (bucket), sau đó làm mịn bằng: giá trị trung bình bin (bin means), trung vị bin (bin median), hoặc biên bin (bin boundaries).
+    \item \textbf{Regression:} Dùng đường hồi quy để dự đoán và thay thế giá trị nhiễu.
+    \item \textbf{Cluster analysis:} Nhóm dữ liệu và xác định điểm nhiễu nằm ngoài cụm.
+\end{itemize}
+
+\subsection{Xử lý không nhất quán dữ liệu}
+
+\textbf{Nguyên nhân:} Cách đặt tên/mã hóa không nhất quán, định dạng khác nhau, lỗi hệ thống/con người.
+
+\textbf{Ví dụ:} ``2004/12/25'' vs ``25/12/2004''; vi phạm ràng buộc khóa ngoại.
+
+\textbf{Giải pháp:} Dùng metadata để sửa, áp dụng ràng buộc dữ liệu, sửa thủ công hoặc tự động.
+
+% ============================================================
+\section{TÍCH HỢP DỮ LIỆU}
+% ============================================================
+
+\subsection{Các vấn đề tích hợp}
+
+\begin{itemize}
+    \item \textbf{Entity identification (Nhận dạng thực thể):} Cùng một thực thể nhưng có tên khác nhau ở các nguồn (ví dụ: \textit{cust\_id} và \textit{cust\_No}; ``Male'' và ``Nam'').
+    \item \textbf{Schema integration:} Gộp lược đồ từ nhiều nguồn.
+    \item \textbf{Redundancy (Dư thừa):} Thuộc tính A có thể suy diễn từ B. Phát hiện bằng phân tích tương quan.
+    \item \textbf{Data value conflicts (Xung đột giá trị):} Cùng đối tượng nhưng giá trị khác nhau do biểu diễn/đơn vị khác nhau (ví dụ: GPA [0,4] vs [0,10]; ``yes'' vs ``1'').
+\end{itemize}
+
+\subsection{Phân tích tương quan để phát hiện dư thừa}
+
+\textbf{Thuộc tính số -- Hệ số tương quan Pearson:}
+\[
+r_{A,B} = \frac{\sum_{i=1}^{N}(a_i - \bar{A})(b_i - \bar{B})}{(N-1)\sigma_A \sigma_B}
+\]
+\begin{itemize}
+    \item $r_{A,B} > 0$: A và B tương quan thuận (có thể xóa một).
+    \item $r_{A,B} = 0$: A và B độc lập.
+    \item $r_{A,B} < 0$: A và B tương quan nghịch.
+\end{itemize}
+
+\textbf{Thuộc tính danh mục -- Kiểm định Chi-square ($\chi^2$):}
+\[
+\chi^2 = \sum_{i}\sum_{j} \frac{(o_{ij} - e_{ij})^2}{e_{ij}}, \quad e_{ij} = \frac{\text{count}(A=a_i) \times \text{count}(B=b_j)}{N}
+\]
+\begin{itemize}
+    \item Bậc tự do (DoF) = $(r-1)(c-1)$.
+    \item Nếu $\chi^2_{\text{tính toán}} \geq \chi^2_{\text{bảng}}$: bác bỏ giả thuyết độc lập $\Rightarrow$ A và B tương quan.
+\end{itemize}
+
+\textbf{Ví dụ:} Nghiên cứu 1500 người về giới tính và sở thích đọc. $\chi^2_{\text{tính}} = 507.93 \gg \chi^2_{\text{bảng}} = 10.828$ (DoF=1, $\alpha$=0.001) $\Rightarrow$ giới tính và sở thích đọc tương quan.
+
+% ============================================================
+\section{BIẾN ĐỔI DỮ LIỆU}
+% ============================================================
+
+\subsection{Các kỹ thuật biến đổi}
+
+\begin{enumerate}
+    \item \textbf{Smoothing (Làm mịn):} Loại bỏ nhiễu (binning, regression, clustering).
+    \item \textbf{Aggregation (Tổng hợp):} Tóm tắt dữ liệu chi tiết thành dữ liệu tổng hợp (min, max, sum, avg). Hỗ trợ data reduction và phân tích đa mức.
+    \item \textbf{Generalization (Tổng quát hóa):} Thay thế dữ liệu chi tiết bằng khái niệm cấp cao hơn theo phân cấp khái niệm (ví dụ: điểm số cụ thể $\to$ GPA $\to$ xếp loại: Giỏi/Khá/Trung bình).
+    \item \textbf{Normalization (Chuẩn hóa):} Biến đổi giá trị về miền giá trị chuẩn.
+    \item \textbf{Attribute/Feature construction:} Tạo thuộc tính mới từ thuộc tính hiện có.
+\end{enumerate}
+
+\subsection{Các phương pháp chuẩn hóa}
+
+\textbf{(a) Min-max normalization:}
+\[
+v' = \frac{v - \min_A}{\max_A - \min_A} \times (\text{new\_max}_A - \text{new\_min}_A) + \text{new\_min}_A
+\]
+Biến đổi $v \in [\min_A, \max_A]$ về $[\text{new\_min}_A, \text{new\_max}_A]$.
+
+\textbf{(b) Z-score normalization:}
+\[
+v' = \frac{v - \bar{A}}{\sigma_A}
+\]
+Chuẩn hóa theo trung bình $\bar{A}$ và độ lệch chuẩn $\sigma_A$.
+
+\textbf{(c) Normalization by decimal scaling:}
+\[
+v' = \frac{v}{10^j}
+\]
+trong đó $j$ là số nguyên nhỏ nhất sao cho $\max(|v'|) < 1$.
+
+% ============================================================
+\section{RÚT GỌN DỮ LIỆU}
+% ============================================================
+
+\subsection{Các chiến lược rút gọn}
+
+\begin{enumerate}
+    \item \textbf{Data cube aggregation:} Tổng hợp dữ liệu theo nhiều mức độ chi tiết khác nhau (ví dụ: tổng doanh thu theo tuần/tháng/quý).
+    \item \textbf{Attribute subset selection:} Loại bỏ thuộc tính dư thừa hoặc không liên quan, giữ nguyên phân phối xác suất. Đây là bài toán tối ưu -- áp dụng heuristics.
+    \item \textbf{Dimensionality reduction:}
+    \begin{itemize}
+        \item \textbf{PCA (Principal Component Analysis):} Chiếu dữ liệu lên không gian chiều thấp hơn.
+        \item \textbf{Wavelet transforms:} Biến đổi wavelet để nén dữ liệu.
+        \item \textbf{Correlation analysis:} Loại bỏ thuộc tính có tương quan cao.
+    \end{itemize}
+    \item \textbf{Numerosity reduction:} Giảm số lượng bản ghi/đối tượng.
+    \begin{itemize}
+        \item \textbf{Parametric:} Lưu mô hình thay vì lưu dữ liệu thô (ví dụ: mô hình hồi quy).
+        \item \textbf{Nonparametric:} Histogram, Clustering, Sampling.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Các phương pháp lấy mẫu (Sampling)}
+
+\begin{itemize}
+    \item \textbf{SRSWOR} (Simple Random Sample Without Replacement): Lấy mẫu ngẫu nhiên không hoàn lại.
+    \item \textbf{SRSWR} (Simple Random Sample With Replacement): Lấy mẫu ngẫu nhiên có hoàn lại.
+    \item \textbf{Cluster sample:} Chọn ngẫu nhiên một số cụm, lấy toàn bộ đối tượng trong cụm đó.
+    \item \textbf{Stratified sample:} Phân tầng dữ liệu, lấy mẫu theo tỷ lệ từng tầng.
+\end{itemize}
+
+% ============================================================
+\section{RỜI RẠC HÓA DỮ LIỆU VÀ PHÂN CẤP KHÁI NIỆM}
+% ============================================================
+
+\subsection{Rời rạc hóa (Data Discretization)}
+
+\textbf{Mục đích:} Giảm số giá trị của thuộc tính liên tục bằng cách chia miền giá trị thành các khoảng (interval) và gán nhãn cho mỗi khoảng.
+
+\textbf{Các phương pháp rời rạc hóa thuộc tính số:}
+\begin{itemize}
+    \item \textbf{Binning:} Chia thành các bin đều hoặc theo tần suất.
+    \item \textbf{Histogram analysis:} Phân tích phân phối để xác định khoảng.
+    \item \textbf{Chi-square merging ($\chi^2$):} Gộp các khoảng lân cận có phân phối lớp tương tự.
+    \item \textbf{Cluster analysis:} Phân cụm dữ liệu 1D, mỗi cụm là một khoảng.
+    \item \textbf{Entropy-based discretization:} Tối thiểu hóa entropy khi chia khoảng.
+    \item \textbf{Intuitive partitioning:} Chia theo quy tắc tự nhiên (ví dụ: chia theo bội số của 10).
+\end{itemize}
+
+\subsection{Xây dựng phân cấp khái niệm (Conceptual Hierarchy)}
+
+\textbf{Mục đích:} Hỗ trợ khai phá ở nhiều mức trừu tượng.
+
+Có thể xây dựng phân cấp cho:
+\begin{itemize}
+    \item \textbf{Dữ liệu danh mục/rời rạc:} Mô tả tường minh theo nhóm hoặc theo quan hệ ngữ nghĩa.
+    \item \textbf{Dữ liệu số:} Sử dụng rời rạc hóa để tạo phân cấp (ví dụ: điểm số $\to$ GPA $\to$ xếp loại).
+\end{itemize}
+
+% ============================================================
+\section{TÓM TẮT}
+% ============================================================
+
+\begin{itemize}
+    \item Dữ liệu thực tế: thiếu, nhiễu, không nhất quán -- tiền xử lý là bắt buộc.
+    \item \textbf{Data Cleaning:} Xử lý missing data, loại bỏ nhiễu (binning, regression, clustering), sửa không nhất quán.
+    \item \textbf{Data Integration:} Nhận dạng thực thể, phát hiện dư thừa (Pearson, $\chi^2$), giải quyết xung đột giá trị.
+    \item \textbf{Data Transformation:} Làm mịn, tổng hợp, tổng quát hóa, chuẩn hóa (min-max, z-score, decimal).
+    \item \textbf{Data Reduction:} Data cube, attribute subset selection, PCA, sampling.
+    \item \textbf{Data Discretization:} Chuyển liên tục $\to$ khoảng; phân cấp khái niệm hỗ trợ khai phá đa mức.
+\end{itemize}
+
+% ============================================================
+\newpage
+\section{CÂU HỎI TỰ LUẬN}
+% ============================================================
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Câu \arabic*.}]
+
+    \item Tại sao tiền xử lý dữ liệu là bước quan trọng không thể thiếu trong quy trình KDD? Trình bày 4 tiêu chí chất lượng dữ liệu và giải thích tầm quan trọng của từng tiêu chí.
+
+    \item So sánh Mean, Median, Mode và Midrange. Trong tình huống nào thì Median là độ đo xu hướng trung tâm tốt hơn Mean? Cho ví dụ.
+
+    \item Giải thích IQR (Interquartile Range) và quy tắc phát hiện ngoại lệ dựa trên IQR. Sự khác biệt giữa outlier và extreme outlier là gì?
+
+    \item Trình bày 3 nguyên nhân gây ra dữ liệu thiếu và 5 phương pháp xử lý dữ liệu thiếu. Phương pháp nào phù hợp nhất trong trường hợp dữ liệu thiếu hoàn toàn ngẫu nhiên?
+
+    \item Giải thích 3 phương pháp Binning (bin means, bin median, bin boundaries) để loại bỏ nhiễu. Minh họa bằng tập dữ liệu: \{4, 8, 15, 21, 21, 24, 25, 28, 34\} với 3 bin.
+
+    \item Trình bày các vấn đề trong tích hợp dữ liệu (Data Integration). Tại sao ``redundancy'' là vấn đề nghiêm trọng và cách phát hiện nó như thế nào?
+
+    \item Giải thích hệ số tương quan Pearson $r_{A,B}$. Khi $r_{A,B} = -0.9$, điều đó có nghĩa là gì đối với hai thuộc tính A và B? Khi nào thì nên xóa một trong hai thuộc tính?
+
+    \item Giải thích kiểm định Chi-square ($\chi^2$) để phân tích tương quan giữa hai thuộc tính danh mục. Bậc tự do và mức ý nghĩa trong kiểm định $\chi^2$ có vai trò gì?
+
+    \item So sánh 3 phương pháp chuẩn hóa: min-max, z-score và decimal scaling. Phương pháp nào phù hợp khi dữ liệu có phân phối Gaussian? Khi nào nên dùng decimal scaling?
+
+    \item Giải thích thuộc tính/tính năng xây dựng (attribute/feature construction) trong Data Transformation. Cho 2 ví dụ cụ thể về cách tạo thuộc tính mới từ thuộc tính hiện có.
+
+    \item Trình bày chiến lược \textbf{Attribute Subset Selection} trong rút gọn dữ liệu. Tại sao đây là bài toán tối ưu? Phương pháp heuristics nào được áp dụng?
+
+    \item So sánh các phương pháp lấy mẫu: SRSWOR, SRSWR, Cluster sample và Stratified sample. Phương pháp nào đảm bảo tính đại diện tốt nhất cho dữ liệu phân tầng?
+
+    \item Giải thích \textbf{PCA (Principal Component Analysis)} trong giảm chiều dữ liệu. Ý tưởng chính của PCA là gì? Khi nào nên sử dụng PCA trong tiền xử lý DM?
+
+    \item Trình bày phương pháp \textbf{Entropy-based discretization}. Tiêu chí nào được sử dụng để tìm điểm chia tối ưu? Tại sao entropy lại hữu ích cho rời rạc hóa?
+
+    \item Giải thích khái niệm \textbf{Conceptual Hierarchy (Phân cấp khái niệm)}. Phân cấp khái niệm hỗ trợ khai phá dữ liệu như thế nào? Cho ví dụ xây dựng phân cấp cho thuộc tính ``địa điểm''.
+
+    \item Phân biệt \textbf{lossless reduction} và \textbf{lossy reduction} trong rút gọn dữ liệu. Mỗi loại có ví dụ điển hình nào? Khi nào có thể chấp nhận lossy reduction?
+
+    \item Giải thích \textbf{phân phối lệch (skewed distribution)}. Data với Mean $<$ Median $<$ Mode có phân phối như thế nào? Điều này ảnh hưởng thế nào đến việc chọn độ đo xu hướng trung tâm?
+
+    \item Trình bày phương pháp \textbf{Numerosity Reduction} dạng tham số (parametric). Tại sao lưu mô hình thay vì lưu dữ liệu thô lại giúp rút gọn dữ liệu? Hạn chế của phương pháp này?
+
+    \item Giải thích vấn đề \textbf{``Data Value Conflicts''} trong tích hợp dữ liệu. Cho ít nhất 3 ví dụ cụ thể về xung đột giá trị và cách giải quyết.
+
+    \item Trình bày quy trình tiền xử lý hoàn chỉnh cho tập dữ liệu điểm thi gồm 100 sinh viên, có một số điểm NULL, một số điểm bất thường (> 100), điểm từ các lớp khác nhau có thang điểm khác nhau ([0,10] và [0,100]).
+
+\end{enumerate}
+
+% ============================================================
+\newpage
+\section{CÂU HỎI TRẮC NGHIỆM}
+% ============================================================
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Câu \arabic*.}]
+
+    \item Tiêu chí chất lượng dữ liệu nào đảm bảo rằng tất cả giá trị cho mọi thuộc tính đều được ghi lại?
+    \begin{enumerate}[label=\Alph*.]
+        \item Accuracy.
+        \item Timeliness.
+        \item Completeness.
+        \item Consistency.
+    \end{enumerate}
+
+    \item Với tập dữ liệu \{25, 25, 40, 45, 50, 60, 60, 60, 65, 80, 85, 85\}, Mode là:
+    \begin{enumerate}[label=\Alph*.]
+        \item 25.
+        \item 56.67.
+        \item 60.
+        \item 62.5.
+    \end{enumerate}
+
+    \item IQR được tính bằng công thức:
+    \begin{enumerate}[label=\Alph*.]
+        \item $Q2 - Q1$.
+        \item $Q3 - Q1$.
+        \item $Q3 - Q2$.
+        \item $\max - \min$.
+    \end{enumerate}
+
+    \item Một điểm dữ liệu được coi là \textbf{ngoại lệ (outlier)} theo quy tắc IQR nếu:
+    \begin{enumerate}[label=\Alph*.]
+        \item $x \geq Q3 + IQR$.
+        \item $x \geq Q3 + 1.5 \times IQR$ hoặc $x \leq Q1 - 1.5 \times IQR$.
+        \item $x \geq Q3 + 3 \times IQR$.
+        \item $x > \text{Mean} + 2\sigma$.
+    \end{enumerate}
+
+    \item Phương pháp xử lý dữ liệu thiếu nào \textbf{không làm thay đổi} tập dữ liệu?
+    \begin{enumerate}[label=\Alph*.]
+        \item Thay bằng giá trị trung bình.
+        \item Thay bằng giá trị thường gặp (mode).
+        \item Bỏ qua (ignore) bản ghi thiếu.
+        \item Thay bằng giá trị dự đoán.
+    \end{enumerate}
+
+    \item Trong phương pháp \textbf{Binning} để loại bỏ nhiễu, \textbf{Bin means} thực hiện:
+    \begin{enumerate}[label=\Alph*.]
+        \item Thay mỗi giá trị trong bin bằng giá trị biên gần nhất.
+        \item Thay mỗi giá trị trong bin bằng giá trị trung bình của bin.
+        \item Thay mỗi giá trị bằng trung vị của bin.
+        \item Xóa các giá trị ngoại lệ trong bin.
+    \end{enumerate}
+
+    \item Khi hệ số tương quan Pearson $r_{A,B} = 0$, hai thuộc tính A và B:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tương quan thuận hoàn toàn.
+        \item Tương quan nghịch hoàn toàn.
+        \item Độc lập với nhau.
+        \item Không thể kết luận.
+    \end{enumerate}
+
+    \item Trong kiểm định Chi-square, bậc tự do (Degree of Freedom) được tính bằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item $(r+1)(c+1)$.
+        \item $(r-1)(c-1)$.
+        \item $r \times c$.
+        \item $r + c - 1$.
+    \end{enumerate}
+
+    \item Min-max normalization biến đổi giá trị $v$ từ miền $[\min_A, \max_A]$ về $[0, 1]$ bằng công thức:
+    \begin{enumerate}[label=\Alph*.]
+        \item $v' = v / \max_A$
+        \item $v' = (v - \bar{A}) / \sigma_A$
+        \item $v' = (v - \min_A) / (\max_A - \min_A)$
+        \item $v' = v / 10^j$
+    \end{enumerate}
+
+    \item Z-score normalization sử dụng:
+    \begin{enumerate}[label=\Alph*.]
+        \item Giá trị min và max.
+        \item Trung bình và độ lệch chuẩn.
+        \item Trung vị và IQR.
+        \item Chỉ giá trị max.
+    \end{enumerate}
+
+    \item Phương pháp nào trong Data Transformation giúp tạo ra \textbf{thuộc tính mới} không có trong tập dữ liệu gốc?
+    \begin{enumerate}[label=\Alph*.]
+        \item Smoothing.
+        \item Aggregation.
+        \item Generalization.
+        \item Attribute/Feature construction.
+    \end{enumerate}
+
+    \item Chiến lược rút gọn dữ liệu nào lưu \textbf{mô hình} thay vì dữ liệu thô?
+    \begin{enumerate}[label=\Alph*.]
+        \item Nonparametric numerosity reduction.
+        \item Parametric numerosity reduction.
+        \item Attribute subset selection.
+        \item Data cube aggregation.
+    \end{enumerate}
+
+    \item \textbf{PCA (Principal Component Analysis)} thực hiện:
+    \begin{enumerate}[label=\Alph*.]
+        \item Loại bỏ các bản ghi dư thừa.
+        \item Chiếu dữ liệu lên không gian có số chiều nhỏ hơn, giữ lại phương sai lớn nhất.
+        \item Phân tầng dữ liệu để lấy mẫu đại diện.
+        \item Thay thế giá trị thiếu bằng giá trị trung bình.
+    \end{enumerate}
+
+    \item Trong rút gọn dữ liệu, \textbf{Attribute Subset Selection} loại bỏ thuộc tính nào?
+    \begin{enumerate}[label=\Alph*.]
+        \item Chỉ thuộc tính số.
+        \item Thuộc tính dư thừa (redundant) hoặc không liên quan (irrelevant).
+        \item Thuộc tính có giá trị thiếu.
+        \item Chỉ thuộc tính danh mục.
+    \end{enumerate}
+
+    \item Phương pháp lấy mẫu nào đảm bảo tính đại diện tốt nhất khi dữ liệu có các nhóm/tầng với tỷ lệ khác nhau?
+    \begin{enumerate}[label=\Alph*.]
+        \item SRSWOR.
+        \item SRSWR.
+        \item Cluster sample.
+        \item Stratified sample.
+    \end{enumerate}
+
+    \item Rời rạc hóa (Data Discretization) chuyển đổi:
+    \begin{enumerate}[label=\Alph*.]
+        \item Thuộc tính danh mục thành thuộc tính số.
+        \item Thuộc tính liên tục thành các khoảng (interval) rời rạc có nhãn.
+        \item Thuộc tính nhị phân thành đa giá trị.
+        \item Dữ liệu 2D thành dữ liệu 1D.
+    \end{enumerate}
+
+    \item Phân cấp khái niệm (Conceptual Hierarchy) hỗ trợ DM bằng cách:
+    \begin{enumerate}[label=\Alph*.]
+        \item Giảm kích thước tập dữ liệu về 1 bản ghi.
+        \item Cho phép khai phá ở nhiều mức trừu tượng khác nhau.
+        \item Tự động phát hiện ngoại lệ.
+        \item Chuẩn hóa thuộc tính về khoảng [0,1].
+    \end{enumerate}
+
+    \item \textbf{Entity identification} trong Data Integration giải quyết vấn đề:
+    \begin{enumerate}[label=\Alph*.]
+        \item Xung đột giá trị giữa các nguồn dữ liệu.
+        \item Hai tên khác nhau ở hai nguồn nhưng cùng chỉ một thực thể.
+        \item Dữ liệu số có đơn vị đo lường khác nhau.
+        \item Thiếu khóa chính trong bảng dữ liệu.
+    \end{enumerate}
+
+    \item Phương pháp nào \textbf{không} phải là kỹ thuật loại bỏ nhiễu (noise removal)?
+    \begin{enumerate}[label=\Alph*.]
+        \item Binning.
+        \item Regression.
+        \item Cluster analysis.
+        \item Min-max normalization.
+    \end{enumerate}
+
+    \item Với bộ dữ liệu 12 sinh viên: Q1 = 42.5, Q3 = 72.5. Giá trị nào sau đây là \textbf{ngoại lệ}?
+    \begin{enumerate}[label=\Alph*.]
+        \item 50.
+        \item 85.
+        \item 95.
+        \item 25.
+    \end{enumerate}
+
+    \item Tiêu chí chất lượng dữ liệu \textbf{Consistency} vi phạm khi:
+    \begin{enumerate}[label=\Alph*.]
+        \item Một giá trị thuộc tính bị NULL.
+        \item Dữ liệu đã lỗi thời.
+        \item Cùng loại dữ liệu nhưng được biểu diễn theo nhiều định dạng khác nhau (ví dụ: ngày tháng).
+        \item Giá trị đo lường sai so với thực tế.
+    \end{enumerate}
+
+    \item Trong \textbf{Decimal Scaling}, giá trị $j$ được chọn là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Giá trị lớn nhất trong tập dữ liệu.
+        \item Số nguyên nhỏ nhất sao cho $\max(|v'|) < 1$.
+        \item Số chữ số thập phân của giá trị trung bình.
+        \item Bậc của phương sai.
+    \end{enumerate}
+
+    \item Generalization trong Data Transformation khác Aggregation ở chỗ:
+    \begin{enumerate}[label=\Alph*.]
+        \item Generalization chỉ áp dụng cho thuộc tính số.
+        \item Generalization thay thế dữ liệu chi tiết bằng khái niệm cấp cao hơn theo phân cấp khái niệm.
+        \item Aggregation tạo ra thuộc tính mới không có trong dữ liệu gốc.
+        \item Generalization chỉ áp dụng cho dữ liệu danh mục.
+    \end{enumerate}
+
+    \item Phương pháp phát hiện ngoại lệ nào dựa trên việc so sánh một điểm với \textbf{mật độ} của vùng xung quanh nó?
+    \begin{enumerate}[label=\Alph*.]
+        \item Statistical distribution-based.
+        \item Distance-based.
+        \item Density-based.
+        \item Deviation-based.
+    \end{enumerate}
+
+    \item \textbf{Data Cube Aggregation} trong rút gọn dữ liệu phù hợp với dữ liệu kiểu:
+    \begin{enumerate}[label=\Alph*.]
+        \item Chỉ dữ liệu nhị phân.
+        \item Additive và semi-additive (dữ liệu số có thể tổng hợp).
+        \item Dữ liệu văn bản không cấu trúc.
+        \item Dữ liệu ảnh và video.
+    \end{enumerate}
+
+    \item Số phương pháp chuẩn hóa (normalization) được trình bày trong slide C2 là:
+    \begin{enumerate}[label=\Alph*.]
+        \item 2.
+        \item 3.
+        \item 4.
+        \item 5.
+    \end{enumerate}
+
+    \item Nếu $r_{A,B} = 0.95$, nhà phân tích nên:
+    \begin{enumerate}[label=\Alph*.]
+        \item Giữ cả hai thuộc tính A và B vì chúng tương quan nghịch.
+        \item Xem xét xóa một trong hai thuộc tính vì chúng có tương quan thuận rất cao (dư thừa).
+        \item Không làm gì vì $r_{A,B} < 1$.
+        \item Nhân đôi thuộc tính để tăng thông tin.
+    \end{enumerate}
+
+    \item Trong phương pháp Binning, \textbf{Bin boundaries} thực hiện:
+    \begin{enumerate}[label=\Alph*.]
+        \item Thay mỗi giá trị bằng giá trị trung bình của bin.
+        \item Thay mỗi giá trị bằng giá trị biên gần nhất (min hoặc max của bin).
+        \item Xóa toàn bộ giá trị trong bin.
+        \item Thay bằng giá trị trung vị của bin.
+    \end{enumerate}
+
+    \item Trong Data Integration, \textbf{chi-square test} được dùng để:
+    \begin{enumerate}[label=\Alph*.]
+        \item Chuẩn hóa dữ liệu về khoảng [0,1].
+        \item Phân tích tương quan giữa hai thuộc tính danh mục.
+        \item Phát hiện ngoại lệ trong phân phối chuẩn.
+        \item Rời rạc hóa thuộc tính liên tục.
+    \end{enumerate}
+
+    \item Mục tiêu chính của \textbf{Data Reduction} trong tiền xử lý dữ liệu là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tăng kích thước tập dữ liệu để có nhiều mẫu huấn luyện hơn.
+        \item Biến đổi tập dữ liệu thành tập nhỏ hơn trong khi giữ nguyên tính đầy đủ thông tin.
+        \item Chỉ giảm số thuộc tính (chiều) mà không giảm số bản ghi.
+        \item Loại bỏ tất cả các ngoại lệ khỏi tập dữ liệu.
+    \end{enumerate}
+
+    \item Phân phối lệch âm (negatively skewed) có đặc điểm:
+    \begin{enumerate}[label=\Alph*.]
+        \item Mean $>$ Median $>$ Mode.
+        \item Mean $<$ Median $<$ Mode.
+        \item Mean $=$ Median $=$ Mode.
+        \item Mode $<$ Mean $<$ Median.
+    \end{enumerate}
+
+    \item Giá trị $e_{ij}$ trong công thức Chi-square được tính bằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tần suất quan sát thực tế.
+        \item Tần suất kỳ vọng nếu hai thuộc tính độc lập: $\text{count}(A=a_i) \times \text{count}(B=b_j) / N$.
+        \item Trung bình của $o_{ij}$ trên toàn bảng.
+        \item Phương sai của phân phối.
+    \end{enumerate}
+
+\end{enumerate}
+
+% ============================================================
+\newpage
+\section*{ĐÁP ÁN}
+% ============================================================
+
+\subsection*{Câu hỏi tự luận -- Hướng dẫn trả lời}
+
+\begin{singlespace}
+\begin{longtable}{|p{0.08\textwidth}|p{0.82\textwidth}|}
+\hline
+\textbf{Câu} & \textbf{Nội dung cần trình bày} \\
+\hline
+\endhead
+1 & Dữ liệu thực thường thiếu, nhiễu, không nhất quán. 4 tiêu chí: Accuracy (giá trị đúng), Timeliness (cập nhật), Completeness (đầy đủ), Consistency (nhất quán). Chất lượng dữ liệu ảnh hưởng trực tiếp đến chất lượng mô hình DM. \\
+\hline
+2 & Mean: trung bình tất cả giá trị; Median: giá trị giữa; Mode: giá trị phổ biến nhất; Midrange: (max+min)/2. Median tốt hơn khi dữ liệu lệch mạnh hoặc có ngoại lệ (ví dụ: thu nhập) vì không bị ảnh hưởng bởi giá trị cực đoan. \\
+\hline
+3 & IQR = Q3 - Q1. Outlier: $\geq Q3 + 1.5 \times IQR$ hoặc $\leq Q1 - 1.5 \times IQR$. Extreme: $\geq Q3 + 3 \times IQR$. Extreme outlier xa hơn, ít khả năng là dữ liệu hợp lệ hơn outlier thông thường. \\
+\hline
+4 & Nguyên nhân: không tồn tại, lỗi hệ thống, lỗi con người. 5 giải pháp: ignore, cập nhật thủ công, hằng số toàn cục, giá trị mode/mean, giá trị dự đoán. Khi missing hoàn toàn ngẫu nhiên: dùng giá trị mean toàn cục (global average) là hợp lý nhất. \\
+\hline
+5 & Sắp xếp: \{4, 8, 15, 21, 21, 24, 25, 28, 34\}. 3 bin = \{4,8,15\}, \{21,21,24\}, \{25,28,34\}. Bin means: \{9,9,9\}, \{22,22,22\}, \{29,29,29\}. Bin median: \{8,8,8\}, \{21,21,21\}, \{28,28,28\}. Bin boundaries: \{4,4,15\}, \{21,21,24\}, \{25,25,34\}. \\
+\hline
+6 & Vấn đề: entity identification, schema integration, redundancy (A suy ra từ B), data value conflicts. Redundancy nghiêm trọng vì làm lệch kết quả khai phá, tốn bộ nhớ và thời gian. Phát hiện bằng Pearson (số) hoặc chi-square (danh mục). \\
+\hline
+7 & $r_{A,B} = -0.9$: tương quan nghịch rất mạnh (khi A tăng thì B giảm và ngược lại). Xem xét xóa một thuộc tính khi $|r|$ cao (ví dụ $> 0.8$) vì chúng mang thông tin gần như giống nhau. Không nên xóa cả hai vì sẽ mất thông tin. \\
+\hline
+8 & $\chi^2 = \sum (o_{ij} - e_{ij})^2/e_{ij}$. DoF = $(r-1)(c-1)$: số chiều của phân phối chi-square. Mức ý nghĩa $\alpha$: xác suất bác bỏ giả thuyết đúng. So sánh $\chi^2_{\text{tính}}$ với $\chi^2_{\text{bảng}}$ tại DoF và $\alpha$ đã cho. \\
+\hline
+9 & Min-max: bảo tồn quan hệ giữa các giá trị, nhạy với ngoại lệ. Z-score: phù hợp khi dữ liệu Gaussian, không biết min/max trước. Decimal: đơn giản nhưng không bảo tồn phân phối. Gaussian $\to$ dùng z-score. Khi muốn giá trị $|v'| < 1$ dễ dàng $\to$ decimal. \\
+\hline
+10 & Feature construction: tạo thuộc tính mới hữu ích hơn. VD1: từ (ngày\_bán - ngày\_sản\_xuất) tạo thuộc tính ``tuổi\_sản\_phẩm''. VD2: từ (chiều\_cao, cân\_nặng) tạo ``BMI = cân\_nặng/chiều\_cao²''. \\
+\hline
+11 & Attribute subset selection: loại bỏ thuộc tính dư thừa/không liên quan. Bài toán tối ưu vì: $2^n$ tập con có thể (với $n$ thuộc tính). Heuristics: (1) Forward selection: bắt đầu từ $\emptyset$, thêm dần thuộc tính tốt nhất; (2) Backward elimination: bắt đầu từ tất cả, xóa dần thuộc tính tệ nhất. \\
+\hline
+12 & SRSWOR: không hoàn lại, mỗi phần tử xuất hiện tối đa 1 lần. SRSWR: có hoàn lại, phần tử có thể lặp. Cluster: chọn cụm ngẫu nhiên, lấy toàn bộ cụm. Stratified: lấy theo tỷ lệ từng tầng $\to$ đại diện tốt nhất khi dữ liệu không đồng đều giữa các nhóm. \\
+\hline
+13 & PCA tìm các hướng (principal components) có phương sai lớn nhất, chiếu dữ liệu lên không gian đó. Giữ $k$ components đầu tiên thay vì $n$ chiều gốc. Dùng khi: nhiều thuộc tính tương quan cao, cần giảm chiều trước khi áp dụng thuật toán DM. \\
+\hline
+14 & Entropy-based: tại mỗi điểm chia, tính entropy của các lớp trong mỗi khoảng. Chọn điểm chia tối thiểu hóa entropy tổng có trọng số. Entropy hữu ích vì đo mức độ hỗn loạn/thuần của lớp trong mỗi khoảng. \\
+\hline
+15 & Conceptual hierarchy: tổ chức theo cấp bậc trừu tượng. Hỗ trợ DM đa mức: khai phá ở mức tổng quát trước, sau đó drill-down. Ví dụ địa điểm: ``Bình Thạnh'' $\to$ ``TP.HCM'' $\to$ ``Việt Nam'' $\to$ ``Châu Á''. \\
+\hline
+16 & Lossless: không mất thông tin -- ví dụ: attribute subset selection (giữ nguyên phân phối). Lossy: mất một phần thông tin -- ví dụ: Sampling, Binning. Chấp nhận lossy khi: mất mát thông tin nhỏ, lợi ích rút gọn lớn hơn chi phí mất mát. \\
+\hline
+17 & Lệch âm (negatively skewed): đuôi dài bên trái; Mode $>$ Median $>$ Mean. Nên dùng Median vì không bị kéo lệch bởi các giá trị cực đoan nhỏ. Dữ liệu thu nhập thường có phân phối lệch dương (positively skewed). \\
+\hline
+18 & Parametric: lưu tham số mô hình (ví dụ: $\theta_0, \theta_1$ của hồi quy tuyến tính) thay vì toàn bộ dữ liệu. Hạn chế: chỉ phù hợp khi dữ liệu tuân theo mô hình đã chọn; mất thông tin chi tiết ngoài mô hình. \\
+\hline
+19 & Xung đột biểu diễn: ``2004/12/25'' vs ``25/12/2004'' $\to$ chuẩn hóa định dạng. Xung đột đơn vị: GPA [0,4] vs [0,10] $\to$ chuyển đổi về cùng thang. Xung đột mã hóa: ``yes/no'' vs ``1/0'' $\to$ thống nhất mã hóa. Giải quyết: dùng metadata và áp dụng quy tắc chuyển đổi nhất quán. \\
+\hline
+20 & (1) Data Cleaning: xử lý NULL bằng mean/mode; xác định điểm > 100 là outlier $\to$ xóa hoặc thay bằng max hợp lệ; (2) Data Integration: xác định cùng sinh viên, cùng môn học từ các lớp khác nhau; (3) Data Transformation: chuẩn hóa thang điểm về [0,10] bằng min-max normalization (chia [0,100] cho 10); (4) Kiểm tra tính nhất quán sau xử lý. \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\subsection*{Câu hỏi trắc nghiệm -- Đáp án}
+
+\begin{singlespace}
+\begin{longtable}{|c|c||c|c||c|c||c|c|}
+\hline
+\textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} \\
+\hline
+\endhead
+1 & C & 11 & D & 21 & C & 31 & B \\
+\hline
+2 & C & 12 & B & 22 & B & 32 & B \\
+\hline
+3 & B & 13 & B & 23 & B & 33 & C \\
+\hline
+4 & B & 14 & B & 24 & C & 34 & B \\
+\hline
+5 & C & 15 & D & 25 & B & 35 & B \\
+\hline
+6 & B & 16 & B & 26 & B & 36 & B \\
+\hline
+7 & C & 17 & B & 27 & B & 37 & B \\
+\hline
+8 & B & 18 & B & 28 & C & 38 & B \\
+\hline
+9 & C & 19 & D & 29 & B & 39 & B \\
+\hline
+10 & B & 20 & C & 30 & A & 40 & B \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\end{document}

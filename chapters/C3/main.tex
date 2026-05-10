@@ -1,0 +1,633 @@
+% Data Mining - Chapter 3: Data Regression
+\documentclass[10pt]{article}
+\input{../_preamble}
+
+\begin{document}
+\onehalfspacing
+\renewcommand{\arraystretch}{1.5}
+
+\newcommand{\ChapterNum}{3}
+\newcommand{\ChapterTitle}{HỒI QUY DỮ LIỆU (DATA REGRESSION)}
+\input{../_title}
+
+% ============================================================
+\section{GIỚI THIỆU VỀ HỒI QUY}
+% ============================================================
+
+\subsection{Định nghĩa Hồi Quy}
+
+\begin{itemize}
+    \item \textbf{J. Han et al.:} Hồi quy là cơ chế thống kê cho phép dự đoán các giá trị số thực và liên tục.
+    \item \textbf{R.D. Snee (1977):} Hồi quy là cơ chế thống kê cho phép dự đoán, kiểm soát và học các quy tắc sinh ra dữ liệu từ thực nghiệm.
+    \item \textbf{Wiki (2009):} Phân tích hồi quy là cơ chế thống kê ước lượng mối quan hệ giữa các biến độc lập.
+\end{itemize}
+
+\textbf{Phân biệt quan trọng:}
+\begin{itemize}
+    \item \textbf{Hồi quy (Regression):} Dự đoán giá trị số thực (real-valued output) -- ví dụ: giá nhà, giá cổ phiếu.
+    \item \textbf{Phân lớp (Classification):} ``Dự đoán'' cho giá trị rời rạc (discrete values) -- ví dụ: spam/not spam.
+\end{itemize}
+
+\subsection{Mô hình hồi quy}
+
+Phương trình hồi quy tổng quát:
+\[
+Y = f(X, \theta)
+\]
+\begin{itemize}
+    \item $X$: tập biến độc lập/dự báo (predictors/independent variables) -- mô tả các thay đổi của $Y$.
+    \item $Y$: biến đáp ứng/phụ thuộc (response/dependent variable) -- mô tả sự kiện quan tâm.
+    \item $\theta$: hệ số hồi quy (regression coefficients) -- mô tả mức độ ảnh hưởng tương đối của $X$ lên $Y$.
+\end{itemize}
+
+\subsection{Phân loại mô hình hồi quy}
+
+\begin{itemize}
+    \item \textbf{Tuyến tính (Linear) vs. Phi tuyến (Non-linear):} Linear: quan hệ tuyến tính giữa các tham số ảnh hưởng lên $Y$; Non-linear: ngược lại.
+    \item \textbf{Đơn biến (Univariate) vs. Đa biến (Multivariate):} $X = (X_1)$ vs. $X = (X_1, X_2, \ldots, X_k)$.
+    \item \textbf{Tham số (Parametric), phi tham số (Nonparametric), bán tham số (Semiparametric):}
+    \begin{itemize}
+        \item Parametric: $Y = \theta_0 + \theta_1 X$ (số tham số hữu hạn).
+        \item Nonparametric: $Y = \theta_0 + f(X)$ (số tham số vô hạn).
+        \item Semiparametric: $Y = \theta_0 + \theta_1 X_1 + f(X_2)$ (hữu hạn tham số quan tâm).
+    \end{itemize}
+    \item \textbf{Đối xứng (Symmetric) vs. Bất đối xứng (Asymmetric):}
+    \begin{itemize}
+        \item Symmetric: mô hình mô tả (log-linear models).
+        \item Asymmetric: mô hình dự đoán (generalized linear models).
+    \end{itemize}
+\end{itemize}
+
+% ============================================================
+\section{HỒI QUY TUYẾN TÍNH ĐƠN BIẾN}
+% ============================================================
+
+\subsection{Giả thuyết và hàm mục tiêu}
+
+Mô hình: $h_\theta(x) = \theta_0 + \theta_1 x$
+
+\textbf{Ký hiệu:}
+\begin{itemize}
+    \item $N$: số mẫu huấn luyện.
+    \item $x^{(i)}, y^{(i)}$: giá trị đầu vào/đầu ra của mẫu thứ $i$.
+\end{itemize}
+
+\textbf{Sai số dự đoán (residual):} $e^{(i)} = h_\theta(x^{(i)}) - y^{(i)}$
+
+\textbf{Hàm chi phí (Cost function -- MSE):}
+\[
+J(\theta_0, \theta_1) = \frac{1}{2N} \sum_{i=1}^{N} \left(h_\theta(x^{(i)}) - y^{(i)}\right)^2
+\]
+
+\textbf{Mục tiêu:} Tìm $(\theta_0^*, \theta_1^*)$ để tối thiểu hóa $J(\theta_0, \theta_1)$.
+
+\subsection{Phương pháp Gradient Descent}
+
+\textbf{Ý tưởng:} Xuất phát từ điểm ngẫu nhiên $(\theta_0, \theta_1)$, lặp lại cập nhật để giảm $J$:
+
+\textbf{Thuật toán (cập nhật đồng thời $\theta_0$ và $\theta_1$):}
+\[
+\theta_j := \theta_j - \alpha \frac{\partial J}{\partial \theta_j}
+\]
+\[
+\frac{\partial J}{\partial \theta_0} = \frac{1}{N}\sum_{i=1}^{N}(h_\theta(x^{(i)}) - y^{(i)}), \quad
+\frac{\partial J}{\partial \theta_1} = \frac{1}{N}\sum_{i=1}^{N}(h_\theta(x^{(i)}) - y^{(i)}) \cdot x^{(i)}
+\]
+
+\textbf{Learning rate $\alpha$:}
+\begin{itemize}
+    \item $\alpha$ quá nhỏ: học chậm, mất nhiều vòng lặp.
+    \item $\alpha$ quá lớn: khó hội tụ, $J$ có thể không giảm tại mỗi bước.
+    \item Thực nghiệm: thử $\alpha \in \{0.001, 0.003, 0.01, 0.03, 0.1, 0.3, \ldots\}$.
+\end{itemize}
+
+\subsection{Công thức trực tiếp (Closed-form)}
+
+Khi $\theta_0 = 0$: Dừng lại ở $\hat{\theta}_1 = \frac{\sum(x^{(i)} - \bar{x})(y^{(i)} - \bar{y})}{\sum(x^{(i)} - \bar{x})^2}$ và $\hat{\theta}_0 = \bar{y} - \hat{\theta}_1 \bar{x}$.
+
+% ============================================================
+\section{HỒI QUY TUYẾN TÍNH ĐA BIẾN}
+% ============================================================
+
+\subsection{Mô hình đa biến}
+
+\[
+h_\theta(x) = \theta_0 + \theta_1 x_1 + \theta_2 x_2 + \ldots + \theta_n x_n = \theta^T x
+\]
+(với $x_0 = 1$)
+
+\textbf{Hàm chi phí:}
+\[
+J(\theta) = \frac{1}{2N}\sum_{i=1}^{N}(h_\theta(x^{(i)}) - y^{(i)})^2
+\]
+
+\textbf{Gradient descent đa biến:}
+\[
+\theta_j := \theta_j - \alpha \frac{1}{N}\sum_{i=1}^{N}(h_\theta(x^{(i)}) - y^{(i)}) \cdot x_j^{(i)}, \quad j = 0, 1, \ldots, n
+\]
+
+\subsection{Feature Scaling (Chuẩn hóa đặc trưng)}
+
+\textbf{Vấn đề:} Các thuộc tính có thang đo khác nhau (ví dụ: kích thước nhà 0--2000 ft², số phòng 1--5) làm gradient descent hội tụ chậm do contour plot $J$ bị kéo dài.
+
+\textbf{Giải pháp:} Chuẩn hóa tất cả đặc trưng về cùng thang đo, ví dụ $x_j' \approx [-1, 1]$:
+\[
+x_j' = \frac{x_j - \mu_j}{\text{range}_j} \quad \text{(mean normalization)}
+\]
+
+\subsection{Phương pháp Normal Equation}
+
+Thay vì dùng gradient descent lặp, có thể tính trực tiếp:
+\[
+\theta = (X^T X)^{-1} X^T Y
+\]
+trong đó $X$ là ma trận $N \times (n+1)$ (thêm cột $x_0 = 1$), $Y$ là vector $N \times 1$.
+
+\textbf{So sánh Gradient Descent và Normal Equation:}
+
+\begin{singlespace}
+\begin{longtable}{|p{0.35\textwidth}|p{0.47\textwidth}|}
+\hline
+\textbf{Gradient Descent} & \textbf{Normal Equation} \\
+\hline
+\endhead
+Cần chọn $\alpha$ & Không cần chọn $\alpha$ \\
+\hline
+Cần nhiều vòng lặp & Không cần lặp \\
+\hline
+Hoạt động tốt khi $n$ lớn ($n = 10^6$) & Phải tính $(X^TX)^{-1}$ -- $O(n^3)$ \\
+\hline
+& Không hiệu quả khi $n > 10^4$ \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\textbf{Vấn đề không khả nghịch (Non-invertible):} Xảy ra khi: (1) các biến phụ thuộc tuyến tính (ví dụ: kích thước m và feet); (2) $n > N$ (nhiều biến hơn mẫu).
+
+% ============================================================
+\section{HỒI QUY PHI TUYẾN}
+% ============================================================
+
+Khi $Y$ là hàm phi tuyến theo tham số $\theta$:
+\[
+Y = f(X, \theta) \quad \text{(ví dụ: hàm mũ, logarit, Gaussian)}
+\]
+
+Xác định $\theta$ tối ưu bằng: thuật toán tối ưu cục bộ (local optimization) hoặc tối ưu toàn cục (global optimization) tối thiểu hóa tổng bình phương sai số.
+
+% ============================================================
+\section{ỨNG DỤNG VÀ VẤN ĐỀ TRONG HỒI QUY}
+% ============================================================
+
+\subsection{Ứng dụng}
+
+\begin{itemize}
+    \item \textbf{Tiền xử lý DM:} Làm mịn dữ liệu, loại bỏ nhiễu.
+    \item \textbf{Nhiệm vụ DM:} Dự đoán giá trị số, phân tích mô tả.
+    \item \textbf{Các lĩnh vực:} Sinh học, nông nghiệp, kinh tế, kinh doanh, tài chính, bảo hiểm, e-commerce, khoa học, robot, điều khiển tự động.
+\end{itemize}
+
+\subsection{Đánh giá mô hình hồi quy}
+
+\paragraph{Phương pháp tách dữ liệu:}
+\begin{itemize}
+    \item \textbf{Holdout method:} Chia ngẫu nhiên $D$ thành tập huấn luyện (2/3) và tập kiểm tra (1/3).
+    \item \textbf{K-fold cross-validation:} Chia $D$ thành $k$ phần bằng nhau. Lặp $k$ lần: dùng phần $k$ để kiểm tra, phần còn lại để huấn luyện. Tính trung bình độ chính xác.
+\end{itemize}
+
+\paragraph{Các độ đo đánh giá độ chính xác:}
+\begin{itemize}
+    \item \textbf{SSE (Sum of Squared Errors):} $\text{SSE} = \sum_{i=1}^{n}(\hat{y}_i - y_i)^2$ -- đo lường tổng thể, nhỏ hơn tốt hơn.
+    \item \textbf{MSE (Mean Squared Error):} $\text{MSE} = \frac{\text{SSE}}{n-m}$ ($m$: số hệ số hồi quy) -- đo phương sai còn lại, nhỏ hơn tốt hơn.
+    \item \textbf{S (Standard Error of Estimate):} $S = \sqrt{\text{MSE}}$ -- sai số trung bình trong dự đoán, đo độ chính xác của dự đoán.
+\end{itemize}
+
+\subsection{Vấn đề trong hồi quy}
+
+\begin{itemize}
+    \item Giả định về phân phối dữ liệu (quan hệ giữa biến độc lập và phụ thuộc).
+    \item Tính độc lập của các biến dự báo.
+    \item Biến phải liên tục (cả predictors và responses).
+    \item Lượng dữ liệu không đủ lớn.
+    \item Xác định dạng mô hình hồi quy phù hợp.
+    \item \textbf{Kỹ thuật nâng cao:} ANN (Artificial Neural Network), SVM (Support Vector Machine).
+\end{itemize}
+
+\paragraph{Các yếu tố ảnh hưởng đến thành công của mô hình hồi quy:}
+\begin{enumerate}
+    \item Xác định bài toán đúng đắn.
+    \item Chọn biến quan trọng và dạng mô hình.
+    \item Tập dữ liệu tốt (cả về khối lượng và chất lượng).
+    \item Thuật toán ước lượng hệ số tốt (ví dụ: gradient descent).
+    \item Kỹ thuật kiểm định mô hình.
+\end{enumerate}
+
+% ============================================================
+\section{TÓM TẮT}
+% ============================================================
+
+\begin{itemize}
+    \item Hồi quy là kỹ thuật thống kê dự đoán giá trị số thực liên tục.
+    \item Phân loại: Linear/Non-linear, Univariate/Multivariate, 
+    
+    Parametric/Nonparametric/Semiparametric.
+    \item Đơn biến: $h_\theta(x) = \theta_0 + \theta_1 x$; tối thiểu hóa $J$ bằng gradient descent.
+    \item Đa biến: $h_\theta(x) = \theta^T x$; cần feature scaling; có thể dùng normal equation.
+    \item Đánh giá: SSE, MSE, S; holdout hoặc k-fold cross-validation.
+    \item Đơn giản nhưng hữu ích; ứng dụng rộng rãi; là ví dụ điển hình về đóng góp của thống kê vào DM.
+\end{itemize}
+
+% ============================================================
+\newpage
+\section{CÂU HỎI TỰ LUẬN}
+% ============================================================
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Câu \arabic*.}]
+
+    \item Hồi quy (Regression) là gì? Phân biệt hồi quy với phân lớp (Classification). Nêu ít nhất 3 ví dụ ứng dụng thực tiễn của hồi quy trong khai phá dữ liệu.
+
+    \item Giải thích phương trình hồi quy $Y = f(X, \theta)$. Các thành phần $X$, $Y$, $\theta$ biểu diễn điều gì? Ý nghĩa của dấu và độ lớn của hệ số $\theta_i$ là gì?
+
+    \item Trình bày đầy đủ các loại mô hình hồi quy: linear/nonlinear, univariate/multivariate, parametric/nonparametric/semiparametric. Cho ví dụ cụ thể cho mỗi loại.
+
+    \item Hàm chi phí (Cost function) $J(\theta_0, \theta_1)$ trong hồi quy tuyến tính đơn biến là gì? Tại sao sử dụng MSE thay vì MAE (Mean Absolute Error)?
+
+    \item Mô tả chi tiết thuật toán \textbf{Gradient Descent} cho hồi quy đơn biến. Tại sao cần cập nhật $\theta_0$ và $\theta_1$ \textbf{đồng thời}? Điều gì xảy ra nếu cập nhật tuần tự?
+
+    \item Learning rate $\alpha$ trong Gradient Descent ảnh hưởng đến quá trình học như thế nào? Trình bày các trường hợp $\alpha$ quá nhỏ, $\alpha$ quá lớn và $\alpha$ phù hợp. Cách chọn $\alpha$ thực tế?
+
+    \item Trình bày mô hình hồi quy tuyến tính đa biến. Sự khác biệt về thuật toán Gradient Descent giữa đơn biến và đa biến là gì?
+
+    \item \textbf{Feature Scaling} là gì? Tại sao Feature Scaling quan trọng trong hồi quy đa biến với Gradient Descent? Mô tả hiệu ứng của thiếu scaling lên contour plot của $J$.
+
+    \item So sánh \textbf{Gradient Descent} và \textbf{Normal Equation} để tối ưu hồi quy đa biến. Khi nào nên dùng mỗi phương pháp?
+
+    \item Giải thích vấn đề \textbf{ma trận không khả nghịch (Non-invertible)} trong Normal Equation. Nguyên nhân và cách khắc phục như thế nào?
+
+    \item Phương trình Normal Equation là gì? Dẫn xuất công thức $\theta = (X^TX)^{-1}X^TY$ và giải thích ý nghĩa của từng ma trận.
+
+    \item Hồi quy phi tuyến (Non-linear Regression) khác hồi quy tuyến tính như thế nào? Cho 3 ví dụ về hàm phi tuyến và tình huống thực tế phù hợp.
+
+    \item Trình bày phương pháp \textbf{K-fold Cross-Validation} để đánh giá mô hình hồi quy. Ưu điểm của K-fold so với Holdout method là gì? Giá trị $k$ nào phổ biến?
+
+    \item Giải thích SSE, MSE và S (Standard Error of Estimate). Mối quan hệ giữa 3 độ đo này là gì? Khi nào thì mô hình được coi là có độ chính xác tốt?
+
+    \item Trình bày ví dụ hồi quy đa biến với tập dữ liệu bán hàng: $y = \text{Quantity Sold} = 8536.21 - 835.72 \times \text{Price} + 0.592 \times \text{Advertising}$. Giải thích ý nghĩa của các hệ số.
+
+    \item Giải thích tại sao hồi quy tuyến tính đơn biến với dạng $h_\theta(x) = \theta_0 + \theta_1 x$ tạo ra \textbf{convex cost function} J và không có local minima?
+
+    \item Trình bày ứng dụng của hồi quy trong \textbf{tiền xử lý dữ liệu} (cụ thể trong Data Smoothing và Noise Removal). Hồi quy được dùng như thế nào để loại bỏ nhiễu?
+
+    \item Phân biệt \textbf{Symmetric regression} và \textbf{Asymmetric regression}. Loại nào phù hợp cho nhiệm vụ dự đoán trong DM? Cho ví dụ cụ thể.
+
+    \item Nêu 5 yếu tố ảnh hưởng đến sự thành công của mô hình hồi quy. Yếu tố nào bạn cho là quan trọng nhất và tại sao?
+
+    \item So sánh hồi quy tuyến tính truyền thống với \textbf{ANN (Artificial Neural Network)} và \textbf{SVM (Support Vector Machine)} trong bối cảnh hồi quy nâng cao. Khi nào cần dùng các phương pháp nâng cao?
+
+\end{enumerate}
+
+% ============================================================
+\newpage
+\section{CÂU HỎI TRẮC NGHIỆM}
+% ============================================================
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Câu \arabic*.}]
+
+    \item Hồi quy (Regression) trong DM dùng để dự đoán:
+    \begin{enumerate}[label=\Alph*.]
+        \item Giá trị rời rạc (nhãn lớp).
+        \item Giá trị số thực và liên tục.
+        \item Các tập phổ biến trong tập giao dịch.
+        \item Số lượng cụm trong tập dữ liệu.
+    \end{enumerate}
+
+    \item Mô hình hồi quy $Y = \theta_0 + \theta_1 X$ thuộc loại:
+    \begin{enumerate}[label=\Alph*.]
+        \item Nonparametric univariate.
+        \item Parametric univariate linear.
+        \item Semiparametric multivariate.
+        \item Nonlinear parametric.
+    \end{enumerate}
+
+    \item Hàm chi phí $J(\theta_0, \theta_1)$ trong hồi quy tuyến tính được tối:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tối đa hóa.
+        \item Tối thiểu hóa.
+        \item Giữ cố định.
+        \item Tối đa hóa ở bước đầu, tối thiểu hóa ở bước sau.
+    \end{enumerate}
+
+    \item Sai số dự đoán (residual) $e^{(i)}$ được định nghĩa là:
+    \begin{enumerate}[label=\Alph*.]
+        \item $y^{(i)} - \bar{y}$
+        \item $h_\theta(x^{(i)}) - y^{(i)}$
+        \item $x^{(i)} - \bar{x}$
+        \item $\theta_1 x^{(i)} - \theta_0$
+    \end{enumerate}
+
+    \item Trong Gradient Descent, learning rate $\alpha$ quá lớn dẫn đến:
+    \begin{enumerate}[label=\Alph*.]
+        \item Hội tụ rất nhanh đến nghiệm tối ưu.
+        \item Hội tụ chậm, cần nhiều vòng lặp.
+        \item $J(\theta)$ có thể không giảm tại mỗi bước, thuật toán có thể không hội tụ.
+        \item Gradient descent luôn hội tụ bất kể $\alpha$.
+    \end{enumerate}
+
+    \item Trong Gradient Descent đơn biến, cập nhật $\theta_0$ và $\theta_1$ phải:
+    \begin{enumerate}[label=\Alph*.]
+        \item Cập nhật $\theta_0$ trước, sau đó mới dùng $\theta_0$ mới để cập nhật $\theta_1$.
+        \item Cập nhật $\theta_1$ trước, sau đó cập nhật $\theta_0$.
+        \item Cập nhật đồng thời (simultaneously update).
+        \item Cập nhật luân phiên theo từng vòng lặp.
+    \end{enumerate}
+
+    \item Feature Scaling trong hồi quy đa biến giúp:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tăng độ chính xác của mô hình hồi quy.
+        \item Gradient Descent hội tụ nhanh hơn bằng cách cân bằng thang đo các đặc trưng.
+        \item Giảm overfitting.
+        \item Tự động chọn giá trị $\alpha$ tối ưu.
+    \end{enumerate}
+
+    \item Normal Equation $\theta = (X^TX)^{-1}X^TY$ có ưu điểm so với Gradient Descent là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Hiệu quả hơn khi $n$ rất lớn ($n > 10^6$).
+        \item Không cần chọn $\alpha$ và không cần vòng lặp.
+        \item Luôn tìm được nghiệm tối ưu toàn cục dù $J$ không lồi.
+        \item Có thể áp dụng khi ma trận $(X^TX)$ không khả nghịch.
+    \end{enumerate}
+
+    \item Ma trận $(X^TX)$ trong Normal Equation \textbf{không khả nghịch} khi:
+    \begin{enumerate}[label=\Alph*.]
+        \item Số mẫu $N$ quá nhỏ và $n < N$.
+        \item Tồn tại biến phụ thuộc tuyến tính hoặc số biến $n$ lớn hơn số mẫu $N$.
+        \item Tất cả biến đều độc lập tuyến tính.
+        \item $\alpha$ được chọn quá nhỏ.
+    \end{enumerate}
+
+    \item Mô hình hồi quy $Y = \theta_0 + f(X)$ thuộc loại:
+    \begin{enumerate}[label=\Alph*.]
+        \item Parametric.
+        \item Nonparametric.
+        \item Semiparametric.
+        \item Linear.
+    \end{enumerate}
+
+    \item Độ đo nào sau đây đo lường \textbf{tổng thể} sai số của mô hình hồi quy?
+    \begin{enumerate}[label=\Alph*.]
+        \item MSE.
+        \item S (Standard Error of Estimate).
+        \item SSE (Sum of Squared Errors).
+        \item $R^2$.
+    \end{enumerate}
+
+    \item MSE (Mean Squared Error) được tính bằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item $\text{SSE} \times (n - m)$
+        \item $\text{SSE} / (n - m)$
+        \item $\sqrt{\text{SSE}}$
+        \item $\text{SSE} / n$
+    \end{enumerate}
+
+    \item Trong đánh giá mô hình hồi quy, \textbf{K-fold cross-validation} với $k=10$ có nghĩa là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Chia dữ liệu thành 10 phần, mỗi lần dùng 9 phần test và 1 phần train.
+        \item Chia dữ liệu thành 10 phần; mỗi lần dùng 1 phần test, 9 phần train; lặp 10 lần.
+        \item Lặp gradient descent 10 lần.
+        \item Chọn 10 giá trị $\alpha$ khác nhau và lấy trung bình.
+    \end{enumerate}
+
+    \item Hồi quy tuyến tính đơn biến dạng $h_\theta(x) = \theta_0 + \theta_1 x^2$ thuộc loại:
+    \begin{enumerate}[label=\Alph*.]
+        \item Phi tuyến về tham số (nonlinear in parameters).
+        \item Tuyến tính về tham số (linear in parameters).
+        \item Phi tham số (nonparametric).
+        \item Bán tham số (semiparametric).
+    \end{enumerate}
+
+    \item Dấu của hệ số $\theta_i$ trong mô hình hồi quy biểu diễn:
+    \begin{enumerate}[label=\Alph*.]
+        \item Độ lớn tuyệt đối của ảnh hưởng $X_i$ lên $Y$.
+        \item Hướng ảnh hưởng (tương quan thuận/nghịch) của $X_i$ lên $Y$.
+        \item Mức độ tương quan giữa $X_i$ và các biến khác.
+        \item Xác suất biến $X_i$ xuất hiện trong mô hình.
+    \end{enumerate}
+
+    \item Standard Error $S$ của mô hình hồi quy đo lường:
+    \begin{enumerate}[label=\Alph*.]
+        \item Tổng bình phương sai số.
+        \item Sai số trung bình trong quá trình dự đoán, đo độ chính xác của dự đoán.
+        \item Sai số khi ước lượng $\theta$ bằng gradient descent.
+        \item Số vòng lặp cần thiết để hội tụ.
+    \end{enumerate}
+
+    \item Khi vẽ $J(\theta)$ theo số vòng lặp, thuật toán gradient descent \textbf{không hội tụ} khi:
+    \begin{enumerate}[label=\Alph*.]
+        \item $J(\theta)$ giảm đơn điệu qua mỗi vòng lặp.
+        \item $J(\theta)$ giảm nhanh lúc đầu rồi chậm dần.
+        \item $J(\theta)$ tăng hoặc dao động.
+        \item $J(\theta)$ bằng 0.
+    \end{enumerate}
+
+    \item Với mô hình $y = 9323 - 823 \times \text{price}$ và $R^2 = 0.65$, $R^2$ cho biết:
+    \begin{enumerate}[label=\Alph*.]
+        \item $65\%$ biến động của $y$ được giải thích bởi mô hình.
+        \item $65\%$ các dự đoán là chính xác.
+        \item SSE bằng 0.65.
+        \item Mô hình chính xác $65\%$ trường hợp.
+    \end{enumerate}
+
+    \item Phương pháp \textbf{Holdout} chia dữ liệu thành:
+    \begin{enumerate}[label=\Alph*.]
+        \item $k$ phần bằng nhau.
+        \item Tập huấn luyện và tập kiểm tra (thường 2/3 và 1/3).
+        \item Tập huấn luyện, tập validation và tập kiểm tra.
+        \item 10 fold để cross-validation.
+    \end{enumerate}
+
+    \item Hồi quy tuyến tính đơn biến với $J(\theta_0, \theta_1) = \text{MSE}$ có hình dạng của $J$ là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Hàm lõm (concave function).
+        \item Hàm lồi (convex function) -- dạng bowl/paraboloid.
+        \item Hàm có nhiều điểm cực tiểu cục bộ.
+        \item Hàm tuyến tính phẳng.
+    \end{enumerate}
+
+    \item Với hồi quy đa biến, khi $n = 10^6$ (triệu biến), nên dùng:
+    \begin{enumerate}[label=\Alph*.]
+        \item Normal equation vì không cần vòng lặp.
+        \item Gradient descent vì Normal equation tính $(X^TX)^{-1}$ rất tốn kém.
+        \item Cả hai đều hiệu quả như nhau.
+        \item Chỉ có thể dùng K-NN regression.
+    \end{enumerate}
+
+    \item Kỹ thuật hồi quy nâng cao nào được đề cập trong slide C3?
+    \begin{enumerate}[label=\Alph*.]
+        \item K-Means và DBSCAN.
+        \item Logistic Regression và Decision Tree.
+        \item ANN (Artificial Neural Network) và SVM (Support Vector Machine).
+        \item Apriori và FP-Growth.
+    \end{enumerate}
+
+    \item Mô hình $Y = \theta_0 + \theta_1 X_1 + f(X_2)$ thuộc loại:
+    \begin{enumerate}[label=\Alph*.]
+        \item Parametric.
+        \item Nonparametric.
+        \item Semiparametric.
+        \item Linear nonparametric.
+    \end{enumerate}
+
+    \item Trong hồi quy, nếu $\theta_1 = -835.72$ (hệ số của biến Price), điều đó có nghĩa:
+    \begin{enumerate}[label=\Alph*.]
+        \item Giá tăng 1 đơn vị thì Quantity Sold tăng 835.72.
+        \item Giá tăng 1 đơn vị thì Quantity Sold giảm 835.72.
+        \item Quantity Sold luôn bằng $-835.72 \times \text{Price}$.
+        \item Price và Quantity Sold không có quan hệ tuyến tính.
+    \end{enumerate}
+
+    \item Hồi quy tuyến tính \textbf{đơn biến} có giả thuyết:
+    \begin{enumerate}[label=\Alph*.]
+        \item $h_\theta(x) = \theta_0 + \theta_1 x_1 + \theta_2 x_2$
+        \item $h_\theta(x) = \theta_0 + \theta_1 x$
+        \item $h_\theta(x) = g(\theta^T x)$
+        \item $h_\theta(x) = \theta^T x + f(x)$
+    \end{enumerate}
+
+    \item Trong Gradient Descent, điều kiện dừng (convergence) thường là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Số vòng lặp đạt đúng $n$.
+        \item $J(\theta)$ không thay đổi đáng kể giữa các vòng lặp (hoặc thay đổi dưới ngưỡng).
+        \item $\theta_0 = \theta_1 = 0$.
+        \item $J(\theta) = 0$.
+    \end{enumerate}
+
+    \item Ứng dụng của hồi quy trong \textbf{tiền xử lý dữ liệu} là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Phân lớp điểm dữ liệu vào các nhóm.
+        \item Làm mịn và loại bỏ nhiễu dữ liệu.
+        \item Tìm các luật kết hợp.
+        \item Phân cụm dữ liệu.
+    \end{enumerate}
+
+    \item Khi dùng Normal Equation với $n = 4$ biến và $N = 4$ mẫu, rủi ro lớn nhất là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Gradient descent không hội tụ.
+        \item $(X^TX)$ có thể không khả nghịch do $n \approx N$ (quá ít mẫu so với biến).
+        \item $\alpha$ quá lớn.
+        \item Dữ liệu không có phân phối Gaussian.
+    \end{enumerate}
+
+    \item Tổng bình phương sai số (SSE) trong đánh giá hồi quy được tính bằng:
+    \begin{enumerate}[label=\Alph*.]
+        \item $\sum_{i=1}^{n} |\hat{y}_i - y_i|$
+        \item $\sum_{i=1}^{n} (\hat{y}_i - y_i)^2$
+        \item $\frac{1}{n}\sum_{i=1}^{n}(\hat{y}_i - y_i)^2$
+        \item $\sqrt{\frac{\text{SSE}}{n-m}}$
+    \end{enumerate}
+
+    \item Mô hình $h_\theta(x) = \theta_0 + \theta_1 x + \theta_2 x^2$ biểu diễn:
+    \begin{enumerate}[label=\Alph*.]
+        \item Hồi quy phi tuyến về tham số.
+        \item Hồi quy tuyến tính về tham số (linear in parameters) với $x^2$ là một đặc trưng.
+        \item Hồi quy phi tham số.
+        \item Không thể xác định.
+    \end{enumerate}
+
+    \item Trong cross-validation, mục đích của việc dùng dữ liệu không thấy trong quá trình huấn luyện (unseen test data) để đánh giá là:
+    \begin{enumerate}[label=\Alph*.]
+        \item Kiểm tra khả năng tổng quát hóa (generalization) của mô hình.
+        \item Tối ưu hóa thêm các tham số $\theta$.
+        \item Giảm SSE của tập huấn luyện.
+        \item Tăng tốc độ huấn luyện.
+    \end{enumerate}
+
+\end{enumerate}
+
+% ============================================================
+\newpage
+\section*{ĐÁP ÁN}
+% ============================================================
+
+\subsection*{Câu hỏi tự luận -- Hướng dẫn trả lời}
+
+\begin{singlespace}
+\begin{longtable}{|p{0.08\textwidth}|p{0.82\textwidth}|}
+\hline
+\textbf{Câu} & \textbf{Nội dung cần trình bày} \\
+\hline
+\endhead
+1 & Hồi quy: dự đoán giá trị số thực. Khác phân lớp ở output (liên tục vs. rời rạc). Ví dụ: dự đoán giá nhà, giá cổ phiếu, doanh số bán hàng. \\
+\hline
+2 & $X$: biến độc lập/dự báo; $Y$: biến phụ thuộc/đáp ứng; $\theta$: hệ số. Dấu $\theta_i$: hướng ảnh hưởng (+: thuận, -: nghịch). Độ lớn $|\theta_i|$: mức độ ảnh hưởng. \\
+\hline
+3 & Linear: $Y = \theta_0 + \theta_1 X$; Nonlinear: $Y = e^{\theta_1 X}$; Univariate: 1 biến đầu vào; Multivariate: nhiều biến; Parametric: hữu hạn tham số; Nonparametric: $Y = f(X)$; Semiparametric: $Y = \theta_1 X + f(X_2)$. \\
+\hline
+4 & $J = \frac{1}{2N}\sum(h_\theta(x^{(i)}) - y^{(i)})^2$. MSE hơn MAE vì: khả vi liên tục (dễ lấy đạo hàm), phạt sai số lớn mạnh hơn, tối ưu hóa thuận lợi hơn. \\
+\hline
+5 & Khởi tạo $(\theta_0, \theta_1)$; lặp: tính gradient cho cả $\theta_0$ và $\theta_1$ bằng tham số hiện tại; cập nhật đồng thời. Nếu tuần tự: $\theta_1$ cập nhật sau sẽ dùng $\theta_0$ mới $\Rightarrow$ gradient tính sai, sai kết quả. \\
+\hline
+6 & $\alpha$ nhỏ: $J$ giảm chậm, nhiều vòng lặp. $\alpha$ lớn: $J$ tăng/dao động, không hội tụ. Chọn thực tế: thử 0.001, 0.003, 0.01, ... theo cấp số nhân; vẽ $J$ vs. số vòng lặp để kiểm tra. \\
+\hline
+7 & Đa biến: $h_\theta(x) = \theta^T x = \theta_0 + \sum \theta_j x_j$. Gradient descent cập nhật $n+1$ tham số; công thức gradient: $\frac{\partial J}{\partial \theta_j} = \frac{1}{N}\sum(h_\theta(x^{(i)}) - y^{(i)})x_j^{(i)}$. \\
+\hline
+8 & Feature Scaling: chuẩn hóa đặc trưng về $\approx [-1,1]$. Thiếu scaling: contour plot của $J$ bị kéo dài hình elip, gradient descent đi theo đường ziczac $\Rightarrow$ hội tụ chậm. \\
+\hline
+9 & Gradient descent: cần chọn $\alpha$, lặp nhiều; tốt với $n$ lớn. Normal equation: không cần $\alpha$, không lặp; phải tính $(X^TX)^{-1}$ $O(n^3)$; không dùng khi $n > 10^4$. \\
+\hline
+10 & Non-invertible khi: (1) biến phụ thuộc tuyến tính (ví dụ: kích thước m và feet$^2$) $\to$ xóa biến trùng; (2) $n > N$ $\to$ giảm số biến hoặc thu thập thêm dữ liệu. \\
+\hline
+11 & Normal equation: đặt gradient = 0: $\frac{\partial J}{\partial \theta} = 0$ $\Rightarrow$ $X^TX\theta = X^TY$ $\Rightarrow$ $\theta = (X^TX)^{-1}X^TY$. $X$: ma trận đặc trưng $N \times (n+1)$; $Y$: vector nhãn $N \times 1$; $(X^TX)^{-1}$: giả nghịch đảo. \\
+\hline
+12 & Phi tuyến: $Y$ là hàm phi tuyến theo $\theta$. Ví dụ: (1) $Y = \theta_0 e^{\theta_1 X}$ -- tăng trưởng; (2) $Y = \theta_0 \log(\theta_1 X)$ -- suy giảm logarit; (3) $Y = \frac{1}{1+e^{-\theta^TX}}$ -- sigmoid. \\
+\hline
+13 & K-fold: chia thành $k$ phần; lặp $k$ lần, mỗi lần dùng 1 phần test; tính trung bình độ chính xác. Ưu điểm so với holdout: ít phụ thuộc cách chia dữ liệu, sử dụng toàn bộ dữ liệu để train/test. $k=10$ phổ biến nhất. \\
+\hline
+14 & SSE: tổng bình phương sai số (overall measure). MSE = SSE/(n-m): phương sai còn lại (nhỏ = ít phương sai chưa giải thích). $S = \sqrt{\text{MSE}}$: sai số trung bình dự đoán (đơn vị giống $Y$). Mô hình tốt khi SSE, MSE, S nhỏ. \\
+\hline
+15 & $\theta_0 = 8536.21$: giá trị cơ sở khi Price=0 và Advertising=0 (không có ý nghĩa thực tế ở đây). $\theta_1 = -835.72$: Giá tăng 1\$ thì QS giảm 835.72 (quan hệ nghịch). $\theta_2 = 0.592$: Quảng cáo tăng 1\$ thì QS tăng 0.592. \\
+\hline
+16 & $J(\theta_0, \theta_1)$ là hàm toàn phương (quadratic) -- hình bowl (paraboloid lồi). Hàm lồi không có điểm cực tiểu cục bộ, chỉ có 1 cực tiểu toàn cục $\Rightarrow$ gradient descent luôn tìm được nghiệm tối ưu. \\
+\hline
+17 & Hồi quy trong preprocessing: (1) Data smoothing -- dùng đường hồi quy để làm mịn dữ liệu (thay giá trị thực bằng giá trị trên đường hồi quy); (2) Noise removal -- xác định điểm xa đường hồi quy là nhiễu và loại bỏ. \\
+\hline
+18 & Symmetric regression: mô hình mô tả -- không phân biệt biến phụ thuộc/độc lập (ví dụ: log-linear). Asymmetric: mô hình dự đoán -- phân biệt rõ $X$ và $Y$ (ví dụ: generalized linear). Trong DM dự đoán, dùng asymmetric. \\
+\hline
+19 & 5 yếu tố: (1) Xác định bài toán đúng đắn; (2) Chọn biến và dạng mô hình; (3) Dữ liệu tốt; (4) Thuật toán ước lượng tốt; (5) Kỹ thuật kiểm định. Quan trọng nhất: dữ liệu tốt -- garbage in, garbage out. \\
+\hline
+20 & Hồi quy tuyến tính: đơn giản, giải thích được, hoạt động tốt khi quan hệ tuyến tính. ANN: xử lý phi tuyến phức tạp, nhiều tham số, ít giải thích. SVM: hiệu quả với chiều cao, robust với outlier. Dùng nâng cao khi: quan hệ phi tuyến mạnh, dữ liệu phức tạp, yêu cầu độ chính xác cao. \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\subsection*{Câu hỏi trắc nghiệm -- Đáp án}
+
+\begin{singlespace}
+\begin{longtable}{|c|c||c|c||c|c||c|c|}
+\hline
+\textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} & \textbf{Câu} & \textbf{ĐA} \\
+\hline
+\endhead
+1 & B & 11 & C & 21 & B & 31 & B \\
+\hline
+2 & B & 12 & B & 22 & C & 32 & B \\
+\hline
+3 & B & 13 & B & 23 & C & 33 & B \\
+\hline
+4 & B & 14 & B & 24 & B & 34 & B \\
+\hline
+5 & C & 15 & B & 25 & B & 35 & B \\
+\hline
+6 & C & 16 & B & 26 & B & 36 & B \\
+\hline
+7 & B & 17 & C & 27 & B & 37 & B \\
+\hline
+8 & B & 18 & A & 28 & C & 38 & A \\
+\hline
+9 & B & 19 & B & 29 & B & 39 & B \\
+\hline
+10 & B & 20 & B & 30 & B & 40 & A \\
+\hline
+\end{longtable}
+\end{singlespace}
+
+\end{document}
