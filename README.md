@@ -72,9 +72,17 @@ Khi push lên `main`, CI/CD tự biên dịch và cập nhật PDF trên GitHub 
 
 ## ⚙️ Cài đặt GitHub Pages
 
-1. Vào **Settings → Pages** của repo.
-2. Source: chọn **GitHub Actions**.
-3. Push commit bất kỳ lên `main` để trigger build.
+1. Vào **Settings → Pages** của repo (tab **Pages** bên trái).
+2. Mục **Build and deployment**:
+   - **Source** phải là **GitHub Actions** (không chọn “Deploy from a branch” nếu bạn dùng workflow `deploy-pages`).
+3. Push lên `main` (hoặc chạy workflow thủ công: **Actions → Build & Publish… → Run workflow**).
+
+### Nếu job “Setup GitHub Pages” báo `Not Found` / Get Pages site failed
+
+- Nguyên nhân: repo chưa có **GitHub Pages** hoặc nguồn chưa phải **GitHub Actions** → API `GET /repos/.../pages` trả 404.
+- **Cách 1 (khuyên dùng):** Settings → Pages → Source = **GitHub Actions**, lưu rồi chạy lại workflow.
+- **Cách 2:** Workflow đã có `enablement: true` trong bước `configure-pages` để thử bật Pages qua API; cần quyền `pages: write` (file workflow đã cấu hình).
+- Repo **private** trên tài khoản miễn phí: GitHub có thể **không** cấp GitHub Pages—cần public repo hoặc gói hỗ trợ Pages cho private.
 
 ## 📚 Tài liệu tham khảo
 

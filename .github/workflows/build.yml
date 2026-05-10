@@ -230,8 +230,12 @@ jobs:
           </html>
           HTMLEOF
 
+      # Bật Pages qua API nếu repo chưa có (cần permissions: pages: write).
+      # Nếu vẫn lỗi: Settings → Pages → Source = GitHub Actions (bật thủ công).
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
