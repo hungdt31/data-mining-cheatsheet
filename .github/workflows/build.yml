@@ -8,8 +8,9 @@ on:
       - ".github/workflows/build.yml"
   workflow_dispatch:
 
-# Allow writing to GitHub Pages
+# Pages + đọc artifacts giữa các job
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -35,25 +36,36 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # latex-action@v3: mặc định compiler=latexmk, args có -pdf → đã dùng pdflatex.
+      # Không dùng latexmk_use_pdflatex (input đã bỏ ở v3).
       - name: Compile ${{ matrix.chapter }}/main.tex
         uses: xu-cheng/latex-action@v3
         with:
           working_directory: chapters/${{ matrix.chapter }}
           root_file: main.tex
-          # pdflatex is required for Vietnamese babel + pslatex
-          latexmk_use_pdflatex: true
-          # pass TEXINPUTS so LaTeX can find shared files in chapters/
           extra_system_packages: "py-pygments"
         env:
-          TEXINPUTS: "..//:$TEXINPUTS"
-        continue-on-error: true   # template stubs (C1-C4) may be empty
+          # Thư mục cha chapters/ (chứa _preamble.tex, _title.tex). Chỉ dùng "..//:" —
+          # không nối $TEXINPUTS (tránh kpathsea: TEXINPUTS references itself trong Docker).
+          TEXINPUTS: "..//:"
+        continue-on-error: true
+
+      - name: Stage PDF theo tên chương
+        run: |
+          mkdir -p .ci-pdfs
+          pdf_path="chapters/${{ matrix.chapter }}/main.pdf"
+          if [ -f "$pdf_path" ]; then
+            cp "$pdf_path" ".ci-pdfs/${{ matrix.chapter }}.pdf"
+            echo "OK: .ci-pdfs/${{ matrix.chapter }}.pdf"
+          else
+            echo "SKIP: không có $pdf_path"
+          fi
 
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.chapter }}-pdf
-          # upload only if the PDF was produced
-          path: chapters/${{ matrix.chapter }}/main.pdf
+          name: pdf-${{ matrix.chapter }}
+          path: .ci-pdfs/${{ matrix.chapter }}.pdf
           if-no-files-found: ignore
           retention-days: 7
 
@@ -76,21 +88,24 @@ jobs:
       - name: Download all PDF artifacts
         uses: actions/download-artifact@v4
         with:
+          pattern: pdf-*
           path: artifacts
+          merge-multiple: false
+
+      - name: Debug — file trong artifacts
+        run: find artifacts -type f 2>/dev/null | sort || true
 
       - name: Organize PDFs into deploy directory
         run: |
           mkdir -p dist/chapters
-
-          # copy each PDF with lower-case name, e.g. C5 → c5.pdf
           for chapter in C1 C2 C3 C4 C5 C6; do
             lower=$(echo "$chapter" | tr '[:upper:]' '[:lower:]')
-            src="artifacts/${chapter}-pdf/main.pdf"
+            src="artifacts/pdf-${chapter}/${chapter}.pdf"
             if [ -f "$src" ]; then
               cp "$src" "dist/chapters/${lower}.pdf"
               echo "✓ ${chapter} → chapters/${lower}.pdf"
             else
-              echo "✗ ${chapter} skipped (no PDF found)"
+              echo "✗ ${chapter} skipped (không có $src)"
             fi
           done
 
