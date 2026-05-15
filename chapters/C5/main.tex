@@ -42,11 +42,31 @@ s(\mathbf{x}, \mathbf{y}) = \frac{\mathbf{x}^T \mathbf{y}}{|\mathbf{x}||\mathbf{
 \subsection{Tính khoảng cách theo từng loại thuộc tính}
 
 \paragraph{(a) Thuộc tính có thang đo khoảng (Interval-scaled):}
-Trước tiên chuẩn hóa bằng Z-score: $z_{if} = \dfrac{x_{if} - m_f}{s_f}$, trong đó $m_f$ là giá trị trung bình và $s_f$ là độ lệch tuyệt đối trung bình. Sau đó áp dụng:
+
+Để các thuộc tính có đơn vị và biên độ khác nhau không làm lệch khoảng cách, người ta \textbf{chuẩn hóa} theo dạng Z-score trên từng thuộc tính $f$ ($f = 1,\ldots,p$) cho từng đối tượng $i$ ($i = 1,\ldots,n$).
+
 \begin{itemize}
-    \item \textbf{Euclidean:} $d(i,j) = \sqrt{(x_{i1}-x_{j1})^2 + \dots + (x_{ip}-x_{jp})^2}$
-    \item \textbf{Manhattan:} $d(i,j) = |x_{i1}-x_{j1}| + \dots + |x_{ip}-x_{jp}|$
-    \item \textbf{Minkowski:} $d(i,j) = \left(|x_{i1}-x_{j1}|^q + \dots + |x_{ip}-x_{jp}|^q\right)^{1/q}$
+    \item \textbf{Trung bình (mean) của thuộc tính $f$:}
+    \[
+    m_f = \frac{1}{n}\bigl(x_{1f} + x_{2f} + \cdots + x_{nf}\bigr) = \frac{1}{n}\sum_{i=1}^{n} x_{if}.
+    \]
+    \item \textbf{Độ lệch tuyệt đối trung bình (mean absolute deviation):}
+    \[
+    s_f = \frac{1}{n}\Bigl(|x_{1f} - m_f| + |x_{2f} - m_f| + \cdots + |x_{nf} - m_f|\Bigr)
+        = \frac{1}{n}\sum_{i=1}^{n} |x_{if} - m_f|.
+    \]
+    \item \textbf{Giá trị chuẩn hóa (Z-score measurement theo MAD):}
+    \[
+    z_{if} = \frac{x_{if} - m_f}{s_f}\,.
+    \]
+    (Khi $s_f = 0$, tất cả $x_{if}$ trên cột $f$ bằng nhau; khi thực hành cần xử lý riêng, ví dụ bỏ qua thuộc tính đó hoặc đặt $z_{if} = 0$.)
+\end{itemize}
+
+\textbf{Ghi chú:} sau khi chuẩn hóa, dùng $z_{if}$ \textbf{thay cho} $x_{if}$ trong các bước tính khoảng cách; $i = 1..n$, $f = 1..p$. Tức là các công thức bên dưới áp dụng trên các \textbf{thành phần đã chuẩn hóa} $z_{if}$, $z_{jf}$ (viết gọn dưới dạng tương đương với $x$ để ngắn gọn, nhưng ý nghĩa là đã thay bằng $z$):
+\begin{itemize}
+    \item \textbf{Euclidean:} $d(i,j) = \sqrt{(z_{i1}-z_{j1})^2 + \cdots + (z_{ip}-z_{jp})^2}$
+    \item \textbf{Manhattan:} $d(i,j) = |z_{i1}-z_{j1}| + \cdots + |z_{ip}-z_{jp}|$
+    \item \textbf{Minkowski:} $d(i,j) = \left(|z_{i1}-z_{j1}|^q + \cdots + |z_{ip}-z_{jp}|^q\right)^{1/q}$
 \end{itemize}
 
 \paragraph{(b) Thuộc tính nhị phân (Binary):}
@@ -131,58 +151,183 @@ trong đó $r_i$ là trọng tâm của cụm $C_i$.
     \item \textbf{Nhạy cảm} với nhiễu và giá trị ngoại lệ.
     \item \textbf{Không phù hợp} với cụm có hình dạng phi lồi (non-convex) hoặc kích thước khác nhau rõ rệt.
     \item Kết quả tạo ra các cụm có dạng \textbf{hình cầu} (hyperspherical) với kích thước tương đối đều nhau.
-    \item Phương pháp mở rộng: \textbf{PAM} (k-medoids) -- sử dụng medoid thay vì mean để tăng độ bền với nhiễu.
+    \item Biến thể làm giảm nhạy cảm với ngoại lệ: \textbf{PAM (k-medoids)}.
 \end{itemize}
 
+% ------------------------------------------------------------
+\subsection{PAM (Partitioning Around Medoids)}
+\label{sec:pam-kmedoids}
+% ------------------------------------------------------------
+
+\textbf{K-medoids (đại diện bằng medoid):} thay vì dùng \textbf{trọng tâm (centroid)} là trung bình số học các vector trong cụm (có thể \textbf{không} trùng với bất kỳ đối tượng thực nào), k-medoids chọn \textbf{medoid} là một \textbf{đối tượng thực} trong tập dữ liệu làm đại diện cho cụm. Thông thường medoid của cụm $C$ là điểm $o \in C$ sao cho tổng độ không tương đồng (hoặc tổng khoảng cách) từ $o$ đến các đối tượng khác trong cụm là nhỏ nhất:
+\[
+o^* = \arg\min_{o \in C} \sum_{x \in C} d(x,o)\,.
+\]
+
+\textbf{PAM} là thuật toán phân hoạch kinh điển cho k-medoids, gồm hai pha chính:
+\begin{enumerate}
+    \item \textbf{BUILD:} khởi tạo tập $k$ medoid ban đầu bằng cách lần lượt chọn các điểm làm giảm mạnh hàm mục tiêu (tổng khoảng cách gán cụm).
+    \item \textbf{SWAP:} lặp lại việc thử đổi một medoid hiện tại với một đối tượng không phải medoid; nếu hoán đổi làm \textbf{giảm} tổng chi phí thì chấp nhận, cho đến khi không còn cải thiện.
+\end{enumerate}
+
+\textbf{So sánh trực tiếp K-means và PAM (k-medoids):}
+
+\begin{center}
+\small
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{|p{0.22\textwidth}|p{0.34\textwidth}|p{0.34\textwidth}|}
+\hline
+\textbf{Tiêu chí} & \textbf{K-means} & \textbf{PAM (k-medoids)} \\
+\hline
+Đại diện cụm & \textbf{Mean} (centroid): thường là điểm ``ảo'' trong không gian thuộc tính. & \textbf{Medoid}: \textbf{điểm dữ liệu thực}, dễ giải thích (ví dụ ``khách hàng mẫu''). \\
+\hline
+Hàm mục tiêu điển hình & Tối thiểu tổng bình phương khoảng cách tới centroid (SSE); gắn chặt với khoảng cách Euclidean. & Tối thiểu tổng khoảng cách (hoặc không tương đồng) tới medoid; dùng được với \textbf{ma trận khoảng cách} bất kỳ (Manhattan, v.v.). \\
+\hline
+Độ bền với ngoại lệ / nhiễu & \textbf{Nhạy:} một outlier có thể kéo centroid lệch mạnh. & \textbf{Bền hơn:} medoid phải là điểm thực ở ``trung tâm'' cụm, ít bị kéo bởi giá trị cực đoan. \\
+\hline
+Độ phức tạp & Thường $O(nkt)$, phù hợp dữ liệu \textbf{rất lớn}. & PAM đầy đủ tốn kém hơn (bậc $O(n^2)$ mỗi vòng trong các thao tác SWAP); có phiên bản xấp xỉ (CLARA, CLARANS) cho dữ liệu lớn. \\
+\hline
+Khởi tạo / tối ưu & Cục bộ, phụ thuộc khởi tạo. & Cục bộ tương tự; BUILD--SWAP vẫn không đảm bảo toàn cục. \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Ưu điểm PAM so với K-means:}
+\begin{itemize}
+    \item \textbf{Ổn định hơn} trước nhiễu và điểm ngoại lệ nhờ medoid thay cho mean.
+    \item \textbf{Có đại diện thực tế} (đối tượng có thể chỉ ra trong báo cáo nghiệp vụ).
+    \item Dùng được khi chỉ có \textbf{ma trận không tương đồng} (không cần vector trong $\mathbb{R}^p$).
+\end{itemize}
+
+\textbf{Nhược điểm PAM so với K-means:}
+\begin{itemize}
+    \item \textbf{Chậm hơn} trên cùng $n,k$ khi dùng PAM ``đầy đủ''; K-means mỗi bước chỉ cần tính mean và gán lại.
+    \item Vẫn phải \textbf{chọn $k$} trước (giống K-means), vẫn có rủi ro \textbf{tối ưu cục bộ}.
+    \item Với dữ liệu cực lớn, thường cần \textbf{CLARA/CLARANS} hoặc mẫu con thay vì PAM nguyên bản trên toàn bộ $n$.
+\end{itemize}
+
+K-means phù hợp khi dữ liệu sạch, lớn, Euclidean và cần tốc độ; PAM phù hợp khi cần \textbf{đại diện có thể giải thích}, dữ liệu \textbf{có nhiễu}, hoặc khoảng cách/không tương đồng \textbf{không gắn với mean bình phương}.
 % ============================================================
-\section{PHÂN CỤM PHÂN CẤP (HIERARCHICAL CLUSTERING)}
-% ============================================================
+
+
+\section{PHÂN CỤM DỰA TRÊN PHÂN CẤP (HIERARCHICAL CLUSTERING)}
 
 \subsection{Khái niệm}
 
-Phân cụm phân cấp nhóm các đối tượng thành cây cụm (hierarchy). Có hai hướng tiếp cận:
+Phân cụm phân cấp (\textit{hierarchical clustering}) xây dựng một \textbf{cấu trúc lồng nhau} của các cụm: tại mức trên, cụm lớn \textbf{chứa} các cụm nhỏ hơn ở mức dưới. Toàn bộ quy trình được biểu diễn gọn bằng \textbf{dendrogram} (sơ đồ cây): trục thể hiện thứ tự/mức gộp hoặc tách, độ cao nút thường gắn với khoảng cách (hoặc độ không tương đồng) tại thời điểm gộp hai cụm. Nhờ đó, người dùng có thể \textbf{cắt} cây ở một mức bất kỳ để thu được phân hoạch với số cụm tương ứng -- khác với K-means phải cố định $k$ ngay từ đầu.
+Có hai hướng tiếp cận chính:
+
+\paragraph{Agglomerative (bottom-up -- từ dưới lên):}
 \begin{itemize}
-    \item \textbf{Agglomerative (bottom-up -- từ dưới lên):} Ban đầu mỗi đối tượng là một cụm riêng, sau đó lần lượt gộp các cụm gần nhau nhất.
-    \item \textbf{Divisive (top-down -- từ trên xuống):} Ban đầu tất cả đối tượng trong một cụm, sau đó lần lượt tách ra.
+    \item \textbf{Khởi tạo:} mỗi trong $n$ đối tượng tạo thành \textbf{một cụm đơn} $\Rightarrow$ ban đầu có đúng $n$ cụm.
+    \item \textbf{Vòng lặp:} ở mỗi bước, tìm \textbf{hai cụm} ``gần nhau'' nhất theo một \textbf{tiêu chí liên kết} (linkage) đã chọn (single-, complete-, average-linkage, Ward,\ldots), rồi \textbf{gộp} chúng lại thành một cụm mới. Số cụm giảm đi 1 sau mỗi lần gộp.
+    \item \textbf{Dừng:} sau $n-1$ lần gộp, còn \textbf{một cụm duy nhất} chứa toàn bộ dữ liệu -- toàn bộ lịch sử gộp tạo nên cây phân cấp.
+    \item \textbf{Đặc điểm:} cách làm tự nhiên, phổ biến trong phần mềm (ví dụ thuật toán \textbf{AGNES} ở mục sau). Chi phí tính toán thường \textbf{cao hơn nhiều} so với một lần chạy K-means khi $n$ lớn ($O(n^2)$ hoặc $O(n^3)$ tùy cách cài đặt và loại linkage).
 \end{itemize}
 
-\textbf{Ưu điểm:} Không cần biết trước số cụm $k$.\\
-\textbf{Nhược điểm:} Không thể quay lại (undo) ở mỗi bước gộp/tách.
+\paragraph{Divisive (top-down -- từ trên xuống):}
+\begin{itemize}
+    \item \textbf{Khởi tạo:} \textbf{một cụm} duy nhất chứa tất cả đối tượng.
+    \item \textbf{Vòng lặp:} ở mỗi bước, \textbf{tách} một cụm hiện có thành hai (hoặc nhiều) cụm con sao cho tiêu chí tách là tốt nhất (ví dụ tách theo điểm ``xa'' nhất, hoặc tối đa hóa khoảng cách liên cụm). Số cụm tăng dần cho đến khi đạt cấu trúc mong muốn hoặc mỗi đối tượng là một cụm riêng.
+    \item \textbf{Đặc điểm:} ít dùng hơn agglomerative vì mỗi bước tách phải xem xét \textbf{nhiều cách phân chia} (tổ hợp) -- thường \textbf{tốn kém} hơn; đại diện điển hình là \textbf{DIANA}.
+\end{itemize}
+
+\textbf{So sánh nhanh hai hướng:} bottom-up bắt đầu từ chi tiết rồi gộp dần; top-down bắt đầu từ toàn cục rồi tinh chỉnh dần. Cả hai đều cho cùng một \textbf{dạng kết quả} (cây), không bắt buộc biết $k$ khi chạy thuật toán, nhưng về mặt tính toán agglomerative thường \textbf{dễ triển khai và phổ biến} hơn.
+
+\textbf{Ưu điểm chung:} không cần cố định trước số cụm $k$; có được \textbf{nhiều phân hoạch lồng nhau} trong một lần chạy; trực quan khi minh họa bằng dendrogram.
+
+\textbf{Nhược điểm chung:} mỗi bước gộp/tách là \textbf{quyết định cố định} -- sai lầm ở bước đầu khó sửa (\textbf{không có thao tác undo}); độ phức tạp và bộ nhớ thường \textbf{không lý tưởng} cho dữ liệu cực lớn so với các phương pháp phân hoạch đơn giản (như K-means một lần).
 
 \subsection{AGNES và DIANA}
 
-\begin{itemize}
-    \item \textbf{AGNES} (Agglomerative NESting): thuật toán agglomerative. Khởi đầu với $n$ cụm đơn, lần lượt gộp dựa trên tiêu chí khoảng cách.
-    \item \textbf{DIANA} (Divisive ANAlysis): thuật toán divisive. Khởi đầu với 1 cụm chứa tất cả đối tượng, lần lượt tách ra.
-\end{itemize}
-
-\subsection{Tiêu chí gộp cụm}
+\paragraph{AGNES (Agglomerative NESting):}
+triển khai điển hình của chiến lược \textbf{bottom-up}. Giả sử đã có ma trận khoảng cách (hoặc không tương đồng) giữa từng cặp đối tượng.
 
 \begin{itemize}
-    \item \textbf{Single-linkage:} Khoảng cách giữa hai cụm = khoảng cách \textbf{ngắn nhất} giữa hai đối tượng bất kỳ trong hai cụm. Có xu hướng tạo ra chuỗi dài (chaining effect).
-    \item \textbf{Complete-linkage:} Khoảng cách giữa hai cụm = khoảng cách \textbf{dài nhất} giữa hai đối tượng bất kỳ. Tạo cụm dạng compact hơn.
-    \item \textbf{Average-linkage:} Trung bình tất cả khoảng cách giữa các cặp đối tượng.
-    \item \textbf{Ward's method:} Tối thiểu hóa tổng bình phương trong cụm khi gộp.
+    \item \textbf{Bước 1:} Khởi tạo $n$ cụm, mỗi cụm chứa đúng một đối tượng.
+    \item \textbf{Bước 2:} Tính ma trận khoảng cách \textbf{giữa các cụm} hiện có theo một \textbf{tiêu chí linkage} (mục dưới).
+    \item \textbf{Bước 3:} Tìm cặp cụm có khoảng cách \textbf{nhỏ nhất} và \textbf{gộp} hai cụm đó thành một.
+    \item \textbf{Bước 4:} Cập nhật lại khoảng cách từ cụm mới đến các cụm còn lại (công thức cập nhật tùy thuộc linkage; ví dụ Lance--Williams cho nhiều họ linkage).
+    \item \textbf{Bước 5:} Lặp bước 3--4 cho đến khi còn đúng \textbf{một cụm} (đã thực hiện $n-1$ lần gộp).
 \end{itemize}
+
+\textbf{Độ phức tạp:} cài đặt thẳng thường là $O(n^3)$ hoặc tối ưu hơn tới khoảng $O(n^2 \log n)$ tùy cấu trúc dữ liệu và linkage. Bộ nhớ thường cần lưu ma trận $n \times n$ (hoặc danh sách kề), nên $n$ rất lớn sẽ tốn.
+
+\paragraph{DIANA (Divisive ANAlysis):}
+ví dụ điển hình của \textbf{top-down}: bắt đầu từ một cụm gồm toàn bộ $n$ điểm, lặp lại việc \textbf{tách} một cụm thành hai cụm con cho đến khi mỗi cụm chỉ còn một đối tượng (hoặc dừng sớm theo tiêu chí người dùng).
+
+\begin{itemize}
+    \item \textbf{Bước 1:} Bắt đầu với cụm $C$ chứa tất cả đối tượng.
+    \item \textbf{Bước 2:} Trong cụm $C$, tìm cách phân chia thành hai nhóm con $C_1$ và $C_2$ sao cho \textbf{khoảng cách liên nhóm} (giữa $C_1$ và $C_2$) lớn nhất hoặc tổng độ không đồng nhất trong từng nhóm là nhỏ nhất---thường dùng ý tưởng: chọn \textbf{tâm tách} (điểm ``xa'' nhất so với trung tâm cụm) và gán từng điểm vào nhóm gần tâm nào hơn, rồi cập nhật lại đại diện hai nhóm lặp lại cho đến khi ổn định.
+    \item \textbf{Bước 3:} Trong các cụm hiện có, chọn cụm \textbf{không đồng nhất nhất} (ví dụ đường kính lớn) để \textbf{tách tiếp}.
+    \item \textbf{Bước 4:} Lặp cho đến khi đạt đủ $n$ cụm đơn hoặc người dùng dừng.
+\end{itemize}
+
+Mỗi lần tách phải xét nhiều cách chia nên DIANA thường \textbf{tốn hơn} AGNES trên cùng dữ liệu nhỏ; với dữ liệu lớn, divisive ít được dùng hơn agglomerative nếu không có tối ưu bổ sung.
+
+\subsection{Tiêu chí gộp cụm (linkage)}
+
+Cho hai cụm không rỗng $C_i$ và $C_j$, khoảng cách giữa cụm $D(C_i,C_j)$ được định nghĩa khác nhau tùy loại \textbf{liên kết}. Dưới đây $d(x,y)$ là khoảng cách (hoặc không tương đồng) giữa hai đối tượng.
+
+\begin{itemize}
+    \item \textbf{Single-linkage (liên kết đơn / minimum):}
+    \[
+    D(C_i,C_j) = \min_{x \in C_i,\, y \in C_j} d(x,y).
+    \]
+    Gộp hai cụm ``gần nhau'' nhất theo \textbf{cặp điểm gần nhất}. Dễ tạo chuỗi cụm dài (\textit{chaining effect}) khi có cầu nối nhiễu giữa hai vùng dày.
+
+    \item \textbf{Complete-linkage (liên kết đầy đủ / maximum):}
+    \[
+    D(C_i,C_j) = \max_{x \in C_i,\, y \in C_j} d(x,y).
+    \]
+    Hai cụm chỉ được coi là gần khi \textbf{mọi} cặp điểm liên cụm đều không quá xa---thường tạo cụm \textbf{gọn} (compact), nhưng nhạy hơn với ngoại lệ kéo khoảng cách tối đa.
+
+    \item \textbf{Average-linkage (liên kết trung bình / UPGMA):}
+    \[
+    D(C_i,C_j) = \frac{1}{|C_i|\,|C_j|}\sum_{x \in C_i}\sum_{y \in C_j} d(x,y).
+    \]
+    Cân bằng hơn giữa single và complete; phản ánh mức độ tách rời \textbf{trung bình} giữa hai cụm.
+
+    \item \textbf{Ward's method (phương pháp Ward):} Mỗi lần gộp chọn cặp cụm làm \textbf{tăng ít nhất} tổng bình phương sai số trong cụm (ESS -- error sum of squares / within-cluster variance). Điều kiện thường gắn với khoảng cách Euclidean; thường cho các cụm có kích thước và phương sai tương đối \textbf{cân đối}, thiên hướng tối ưu hóa kiểu ``cầu K-means'' ở từng bước gộp.
+\end{itemize}
+
+Linkage khác nhau $\Rightarrow$ dendrogram và cụm khi cắt cây có thể khác mạnh---cần chọn và kiểm định theo miền ứng dụng.
 
 \subsection{Dendrogram}
 
-Quá trình phân cụm phân cấp được biểu diễn bằng \textbf{dendrogram} (sơ đồ cây). Bằng cách cắt dendrogram ở một ngưỡng tương đồng nhất định, ta thu được số cụm mong muốn.
+\textbf{Dendrogram} là biểu diễn đồ họa của toàn bộ chuỗi gộp (hoặc tách): mỗi \textbf{nút lá} là một đối tượng (hoặc cụm ban đầu); mỗi lần hai nhánh hợp nhất thành nút cha tương ứng một lần gộp. \textbf{Chiều cao} (hoặc vị trí trên trục dọc) tại điểm gộp thường tỷ lệ với khoảng cách $D$ giữa hai cụm vừa gộp -- càng gộp muộn (ở \textbf{cao} trên cây) thường là hai phần càng \textbf{khác biệt}.
 
-\subsection{Một số thuật toán phân cụm phân cấp nổi bật}
-
+\paragraph{Cách dùng thực tế:}
 \begin{itemize}
-    \item \textbf{BIRCH} (Balanced Iterative Reducing and Clustering using Hierarchies): phù hợp với tập dữ liệu lớn.
-    \item \textbf{ROCK} (Robust Clustering using linKs): xử lý thuộc tính danh mục/rời rạc.
-    \item \textbf{Chameleon:} dùng mô hình động để xác định độ tương đồng giữa cặp cụm.
+    \item \textbf{Cắt ngang} dendrogram ở một mức $h$: mọi nhánh còn cách gốc ``xa'' hơn $h$ tạo thành các cụm tách biệt $\Rightarrow$ thu được phân hoạch với một số cụm cố định.
+    \item Có thể chọn mức cắt để có đúng $k$ cụm, hoặc theo ``khoảng trống'' lớn trên trục chiều cao (khe lớn = tự nhiên tách thành $k$ nhóm).
 \end{itemize}
 
-\subsection{Vấn đề của phân cụm phân cấp}
+Muốn dendrogram nhất quán (không có \textbf{nghịch đảo} thứ tự gộp), nhiều thuật toán yêu cầu $D$ thỏa tính \textbf{đơn điệu} theo thời gian gộp -- linkage khác nhau cho tính chất khác nhau (ví dụ single hay có hiện tượng chuỗi).
+
+\subsection{Một số thuật toán / phương pháp phân cụm liên quan phân cấp}
 
 \begin{itemize}
-    \item Cần xác định chính xác điểm dừng gộp/tách.
-    \item Khả năng mở rộng kém: mỗi quyết định gộp/tách phải đánh giá nhiều đối tượng.
-    \item Giải pháp: kết hợp với phương pháp khác (ví dụ: chia-và-trị -- divide and conquer).
+    \item \textbf{BIRCH} (\textit{Balanced Iterative Reducing and Clustering using Hierarchies}): thiết kế cho dữ liệu \textbf{rất lớn}. Dữ liệu được tóm tắt thành các \textbf{clustering feature} (CF) trong cây cân bằng (CF tree) -- lưu số đếm, tổng, bình phương tổng theo chiều, v.v. Phân cụm chủ yếu trên tóm tắt $\Rightarrow$ chỉ cần quét dữ liệu vài lần (linear scan). BIRCH có thể kết hợp bước tinh chỉnh (ví dụ K-means trên tâm lá) nhưng \textbf{ưu tiên khả năng mở rộng} hơn phân cụm phân cấp ``nguyên bản'' trên ma trận đầy đủ.
+
+    \item \textbf{ROCK} (\textit{Robust Clustering using linKs}): nhắm dữ liệu có thuộc tính \textbf{danh mục / rời rạc}. Thay vì chỉ dùng khoảng cách cặp điểm, ROCK dùng khái niệm \textbf{liên kết (link)}: hai điểm ``liên kết'' nếu cùng tương tự với một tập điểm thứ ba; số liên kết $\Rightarrow$ độ tương đồng cụm bền hơn với thuộc tính định tính.
+
+    \item \textbf{Chameleon:} kết hợp mô hình \textbf{đồ thị} (mỗi điểm là đỉnh, cạnh theo láng giềng gần) và độ đo \textbf{tự thích ứng}: quyết định gộp hai cụm dựa trên \textbf{kết nối nội bộ} và \textbf{kết nối liên cụm} tương đối, chứ không chỉ một hàm $D$ cố định. Phù hợp cụm có \textbf{hình dạng bất thường}, mật độ không đều (tương tự tinh thần density-based nhưng trong khung phân cụm phân cấp/người láng giềng).
+\end{itemize}
+
+\subsection{Vấn đề và hạn chế của phân cụm phân cấp}
+
+\begin{itemize}
+    \item \textbf{Chọn điểm dừng và cách cắt cây:} thuật toán cho cả \textbf{cây đầy đủ}; người dùng phải quyết định cắt ở đâu (mức chiều cao, số cụm $k$, hoặc heuristics). Sai lựa chọn $\Rightarrow$ phân hoạch không phù hợp.
+
+    \item \textbf{Sai số tích lũy (không undo):} mỗi lần gộp/tách là quyết định \textbf{vĩnh viễn}; nếu hai cụm ``đáng lẽ'' tách bị gộp sớm do linkage/nhiễu, các bước sau không sửa được cấu trúc cha.
+
+    \item \textbf{Khả năng mở rộng:} ma trận khoảng cách đầy đủ là $O(n^2)$ bộ nhớ; từng bước agglomerative có thể $O(n^3)$ ở cài đặt đơn giản. Với luồng dữ liệu hoặc $n$ cực lớn cần BIRCH, mẫu, hoặc xấp xỉ.
+
+    \item \textbf{Nhạy cảm với nhiễu và linkage:} single-linkage rất nhạy chuỗi; complete nhạy outlier; Ward gắn Euclidean và giả định cầu -- dữ liệu thực tế cần \textbf{so sánh nhiều linkage} hoặc chỉnh tiền xử lý/ chuẩn hóa.
+
+    \item \textbf{Giải pháp thực tế:} kết hợp \textbf{chia nhỏ rồi gộp} (divide-and-conquer), phân cụm hai mức (ví dụ BIRCH $\to$ tinh chỉnh), hoặc dùng phân cụm phân cấp chỉ trên \textbf{mẫu} rồi gán điểm còn lại cho cụm gần nhất.
 \end{itemize}
 
 % ============================================================
