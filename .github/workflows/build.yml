@@ -6,6 +6,8 @@ on:
     paths:
       - "chapters/**"
       - "index.html"
+      - "assets/**"
+      - "scripts/**"
       - ".github/workflows/build.yml"
   workflow_dispatch:
 
@@ -70,6 +72,20 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - name: Cài Pandoc và latexpand (trang HTML chương)
+        run: sudo apt-get update -qq && sudo apt-get install -y pandoc texlive-extra-utils
+
+      - name: Sinh HTML chương từ LaTeX
+        run: python3 scripts/build_chapter_html.py ${{ matrix.chapter }}
+
+      - name: Upload HTML artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-${{ matrix.chapter }}
+          path: .ci-html/${{ matrix.chapter }}.html
+          if-no-files-found: ignore
+          retention-days: 7
+
   # ────────────────────────────────────────────────────────────
   # Job 2: assemble and deploy to GitHub Pages
   # ────────────────────────────────────────────────────────────
@@ -86,48 +102,51 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download all PDF artifacts
+      - name: Tải artifact PDF
         uses: actions/download-artifact@v4
         with:
           pattern: pdf-*
           path: artifacts
           merge-multiple: false
 
-      - name: Debug — file trong artifacts
-        run: find artifacts -type f 2>/dev/null | sort || true
+      - name: Tải artifact HTML
+        uses: actions/download-artifact@v4
+        with:
+          pattern: html-*
+          path: artifacts-html
+          merge-multiple: false
 
-      - name: Organize PDFs into deploy directory
+      - name: Debug — file trong artifacts
+        run: |
+          find artifacts -type f 2>/dev/null | sort || true
+          find artifacts-html -type f 2>/dev/null | sort || true
+
+      - name: Gom PDF, HTML và stylesheet vào dist
         run: |
           mkdir -p dist/chapters
+          cp assets/chapters.css dist/chapters/chapters.css
           for chapter in C1 C2 C3 C4 C5 C6; do
             lower=$(echo "$chapter" | tr '[:upper:]' '[:lower:]')
-            src="artifacts/pdf-${chapter}/${chapter}.pdf"
-            if [ -f "$src" ]; then
-              cp "$src" "dist/chapters/${lower}.pdf"
-              echo "✓ ${chapter} → chapters/${lower}.pdf"
+            src_pdf="artifacts/pdf-${chapter}/${chapter}.pdf"
+            if [ -f "$src_pdf" ]; then
+              cp "$src_pdf" "dist/chapters/${lower}.pdf"
+              echo "✓ PDF ${chapter} → chapters/${lower}.pdf"
             else
-              echo "✗ ${chapter} skipped (không có $src)"
+              echo "✗ PDF ${chapter} skipped"
+            fi
+            src_html="artifacts-html/html-${chapter}/${chapter}.html"
+            if [ -f "$src_html" ]; then
+              cp "$src_html" "dist/chapters/${lower}.html"
+              echo "✓ HTML ${chapter} → chapters/${lower}.html"
+            else
+              echo "✗ HTML ${chapter} skipped"
             fi
           done
 
-      - name: Generate index page
+      - name: Sinh trang mục lục (index)
         env:
           GITHUB_REPO: ${{ github.repository }}
-        run: |
-          CHAPTERS_JSON="["
-          first=true
-          for chapter in C1 C2 C3 C4 C5 C6; do
-            lower=$(echo "$chapter" | tr '[:upper:]' '[:lower:]')
-            if [ -f "dist/chapters/${lower}.pdf" ]; then
-              [ "$first" = false ] && CHAPTERS_JSON+=","
-              CHAPTERS_JSON+="\"${chapter}\""
-              first=false
-            fi
-          done
-          CHAPTERS_JSON+="]"
-          printf '%s' "$CHAPTERS_JSON" > .ci-chapters.json
-          python3 -c "import os, pathlib; repo=os.environ['GITHUB_REPO']; cj=pathlib.Path('.ci-chapters.json').read_text(encoding='utf-8').strip(); src=pathlib.Path('index.html').read_text(encoding='utf-8'); pathlib.Path('dist/index.html').write_text(src.replace('__GITHUB_REPOSITORY__', repo).replace('__CHAPTERS_JSON__', cj), encoding='utf-8')"
-          rm -f .ci-chapters.json
+        run: python3 scripts/render_index.py
 
       # Bật Pages qua API nếu repo chưa có (cần permissions: pages: write).
       # Nếu vẫn lỗi: Settings → Pages → Source = GitHub Actions (bật thủ công).

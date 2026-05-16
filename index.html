@@ -141,9 +141,28 @@
       color: var(--ink);
     }
 
+    .card-actions {
+      margin-top: 0.6rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      align-items: center;
+    }
+
+    .card-link { display: inline-block; }
+
+    .card-link--pdf::after {
+      content: " →";
+      font-weight: 500;
+    }
+
+    .card-link--web::after {
+      content: " →";
+      font-weight: 500;
+    }
+
     .card-link {
-      margin-top: 0.5rem;
-      align-self: flex-start;
+      margin-top: 0;
       font-size: 0.8125rem;
       font-weight: 600;
       letter-spacing: 0.06em;
@@ -158,11 +177,6 @@
     .card-link:hover {
       color: var(--accent-hover);
       border-bottom-color: var(--accent-hover);
-    }
-
-    .card-link::after {
-      content: " →";
-      font-weight: 500;
     }
 
     footer {
@@ -226,16 +240,30 @@
     };
     const available = __CHAPTERS_JSON__;
     const grid = document.getElementById("cards");
-    const chapterNum = (ch) => String(ch.replace("C", "")).padStart(2, "0");
+    const chapterNum = (id) => String(id.replace("C", "")).padStart(2, "0");
 
-    available.forEach((ch) => {
+    available.forEach((entry) => {
+      const ch = entry.id;
       const info = meta[ch] || { title: ch };
       const lower = ch.toLowerCase();
+      const links = [];
+      if (entry.html)
+        links.push(
+          `<a class="card-link card-link--web" href="chapters/${lower}.html">Trên web</a>`
+        );
+      if (entry.pdf)
+        links.push(
+          `<a class="card-link card-link--pdf" href="chapters/${lower}.pdf" target="_blank" rel="noopener noreferrer">PDF</a>`
+        );
+      const actions =
+        links.length > 0
+          ? `<div class="card-actions">${links.join("")}</div>`
+          : "";
       grid.innerHTML += `
         <article class="card">
           <span class="card-badge">Chương ${chapterNum(ch)}</span>
           <div class="card-title">${info.title}</div>
-          <a class="card-link" href="chapters/${lower}.pdf" target="_blank" rel="noopener noreferrer">Bản PDF</a>
+          ${actions}
         </article>`;
     });
     if (available.length === 0)

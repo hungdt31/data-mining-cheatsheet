@@ -44,4 +44,8 @@ desktop.ini
 *~
 .idea/
 
+# CI / local HTML staging
+.ci-html/
+.ci-pdfs/
+
 *.pdf
