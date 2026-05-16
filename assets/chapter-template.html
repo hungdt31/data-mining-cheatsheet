@@ -21,7 +21,7 @@
 <body class="chapter-page">
   <div class="chapter-shell">
     <nav class="chapter-nav" aria-label="Điều hướng">
-      <a class="chapter-nav__back" href="../index.html">← Mục lục</a>
+      <a class="chapter-nav__back" href="../index.html">← Tất cả chương</a>
       <a class="chapter-nav__pdf" href="__PDF_HREF__" target="_blank" rel="noopener">Bản PDF</a>
     </nav>
 
@@ -30,15 +30,97 @@
       <h1 class="chapter-masthead__title">__TITLE__</h1>
     </header>
 
-    <article class="chapter-prose">
+    <div class="chapter-layout">
+      <aside class="chapter-toc-panel" id="chapter-toc-panel" hidden>
+        <p class="chapter-toc__label">Mục lục</p>
+        <nav class="chapter-toc" id="chapter-toc-nav" aria-label="Mục lục trong chương">
+          <div id="chapter-toc-list"></div>
+        </nav>
+      </aside>
+
+      <article class="chapter-prose" id="chapter-prose">
 __BODY__
-    </article>
+      </article>
+    </div>
 
     <footer class="chapter-footer">
-      <a href="../index.html">Về mục lục</a>
+      <a href="../index.html">Danh sách chương</a>
       <span class="chapter-footer__sep">·</span>
       <a href="__PDF_HREF__" target="_blank" rel="noopener">Tải PDF</a>
     </footer>
   </div>
+  <script>
+    (function () {
+      function ensureHeadingIds(headings) {
+        var used = {};
+        for (var i = 0; i < headings.length; i++) {
+          var h = headings[i];
+          var raw = h.id && String(h.id).trim();
+          if (raw && !used[raw]) {
+            used[raw] = true;
+            continue;
+          }
+          var nid = "ch-sec-" + i;
+          h.id = nid;
+          used[nid] = true;
+        }
+      }
+
+      /** Cây ol lồng nhau theo cấp section (h1 &gt; h2 &gt; h3 …). */
+      function buildTocTree(headings) {
+        var list = [];
+        for (var k = 0; k < headings.length; k++) list.push(headings[k]);
+
+        var i = 0;
+        function walk(minLevel) {
+          var ol = document.createElement("ol");
+          ol.className = "chapter-toc__tree";
+          while (i < list.length) {
+            var h = list[i];
+            var level = parseInt(h.tagName.slice(1), 10);
+            if (level < minLevel) break;
+            var li = document.createElement("li");
+            var a = document.createElement("a");
+            a.href = "#" + h.id;
+            a.textContent = h.textContent.trim();
+            li.appendChild(a);
+            i++;
+            if (i < list.length && parseInt(list[i].tagName.slice(1), 10) > level) {
+              li.appendChild(walk(level + 1));
+            }
+            ol.appendChild(li);
+          }
+          return ol;
+        }
+
+        var root = walk(1);
+        if (!root.children.length) return null;
+        return root;
+      }
+
+      function init() {
+        var prose = document.getElementById("chapter-prose");
+        var panel = document.getElementById("chapter-toc-panel");
+        var mount = document.getElementById("chapter-toc-list");
+        if (!prose || !panel || !mount) return;
+
+        var headings = prose.querySelectorAll("h1, h2, h3, h4");
+        if (!headings.length) return;
+
+        ensureHeadingIds(headings);
+        var tree = buildTocTree(headings);
+        if (!tree) return;
+
+        mount.appendChild(tree);
+        panel.hidden = false;
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
 </body>
 </html>
