@@ -47,5 +47,6 @@ desktop.ini
 # CI / local HTML staging
 .ci-html/
 .ci-pdfs/
+.web-dev/
 
 *.pdf

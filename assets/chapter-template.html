@@ -30,17 +30,21 @@
       <h1 class="chapter-masthead__title">__TITLE__</h1>
     </header>
 
+    <!-- prose trước để mobile không bị TOC chặn -->
     <div class="chapter-layout">
-      <aside class="chapter-toc-panel" id="chapter-toc-panel" hidden>
-        <p class="chapter-toc__label">Mục lục</p>
-        <nav class="chapter-toc" id="chapter-toc-nav" aria-label="Mục lục trong chương">
-          <div id="chapter-toc-list"></div>
-        </nav>
-      </aside>
-
       <article class="chapter-prose" id="chapter-prose">
 __BODY__
       </article>
+
+      <!-- TOC: <details> trên mobile/tablet, luôn mở trên desktop qua JS -->
+      <aside class="chapter-toc-panel" id="chapter-toc-panel" hidden>
+        <details class="chapter-toc__details" id="chapter-toc-details">
+          <summary class="chapter-toc__summary">Mục lục</summary>
+          <nav id="chapter-toc-nav" aria-label="Mục lục trong chương">
+            <div id="chapter-toc-list"></div>
+          </nav>
+        </details>
+      </aside>
     </div>
 
     <footer class="chapter-footer">
@@ -49,59 +53,67 @@ __BODY__
       <a href="__PDF_HREF__" target="_blank" rel="noopener">Tải PDF</a>
     </footer>
   </div>
+
   <script>
     (function () {
+      var DESKTOP_BP = 1024;
+
+      /* ── Đảm bảo mọi heading đều có id duy nhất ── */
       function ensureHeadingIds(headings) {
         var used = {};
         for (var i = 0; i < headings.length; i++) {
           var h = headings[i];
           var raw = h.id && String(h.id).trim();
-          if (raw && !used[raw]) {
-            used[raw] = true;
-            continue;
-          }
+          if (raw && !used[raw]) { used[raw] = true; continue; }
           var nid = "ch-sec-" + i;
           h.id = nid;
           used[nid] = true;
         }
       }
 
-      /** Cây ol lồng nhau theo cấp section (h1 &gt; h2 &gt; h3 …). */
+      /* ── Dựng cây <ol> lồng nhau từ danh sách heading ── */
       function buildTocTree(headings) {
-        var list = [];
-        for (var k = 0; k < headings.length; k++) list.push(headings[k]);
-
+        var list = Array.prototype.slice.call(headings);
         var i = 0;
-        function walk(minLevel) {
+        function walk(minLv) {
           var ol = document.createElement("ol");
           ol.className = "chapter-toc__tree";
           while (i < list.length) {
             var h = list[i];
-            var level = parseInt(h.tagName.slice(1), 10);
-            if (level < minLevel) break;
+            var lv = parseInt(h.tagName.slice(1), 10);
+            if (lv < minLv) break;
             var li = document.createElement("li");
-            var a = document.createElement("a");
+            var a  = document.createElement("a");
             a.href = "#" + h.id;
             a.textContent = h.textContent.trim();
             li.appendChild(a);
             i++;
-            if (i < list.length && parseInt(list[i].tagName.slice(1), 10) > level) {
-              li.appendChild(walk(level + 1));
+            if (i < list.length && parseInt(list[i].tagName.slice(1), 10) > lv) {
+              li.appendChild(walk(lv + 1));
             }
             ol.appendChild(li);
           }
           return ol;
         }
-
         var root = walk(1);
-        if (!root.children.length) return null;
-        return root;
+        return root.children.length ? root : null;
       }
 
+      /* ── Mở/đóng details theo breakpoint ── */
+      function syncDetails() {
+        var details = document.getElementById("chapter-toc-details");
+        if (!details) return;
+        if (window.innerWidth >= DESKTOP_BP) {
+          details.setAttribute("open", "");
+        }
+        /* Trên mobile: không ép đóng, để người dùng tự mở */
+      }
+
+      /* ── Khởi tạo ── */
       function init() {
-        var prose = document.getElementById("chapter-prose");
-        var panel = document.getElementById("chapter-toc-panel");
-        var mount = document.getElementById("chapter-toc-list");
+        var prose  = document.getElementById("chapter-prose");
+        var panel  = document.getElementById("chapter-toc-panel");
+        var mount  = document.getElementById("chapter-toc-list");
         if (!prose || !panel || !mount) return;
 
         var headings = prose.querySelectorAll("h1, h2, h3, h4");
@@ -113,7 +125,15 @@ __BODY__
 
         mount.appendChild(tree);
         panel.hidden = false;
+        syncDetails();
       }
+
+      /* Đồng bộ khi resize (e.g. xoay thiết bị, thay đổi cửa sổ) */
+      var resizeTimer;
+      window.addEventListener("resize", function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(syncDetails, 120);
+      });
 
       if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", init);

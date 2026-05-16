@@ -28,6 +28,11 @@ def extract_document_body(flat_tex: str) -> str:
 
 def sanitize_body(tex: str) -> str:
     """Giảm lệnh LaTeX mà Pandoc thường đọc kém."""
+    # Bỏ phần tiêu đề từ _title.tex (3 dòng đầu trang)
+    tex = re.sub(r"\\newcommand\s*\{\\ChapterNum\}\s*\{[^}]*\}\s*", "", tex)
+    tex = re.sub(r"\\newcommand\s*\{\\ChapterTitle\}\s*\{[^}]*\}\s*", "", tex)
+    tex = _strip_first_center_env(tex)
+
     subs = [
         (r"\\onehalfspacing\s*", ""),
         (r"\\renewcommand\s*\{\\arraystretch\}\s*\{[^}]*\}\s*", ""),
@@ -45,6 +50,17 @@ def sanitize_body(tex: str) -> str:
 
     tex = strip_enumerate_optional_args(tex)
     return tex
+
+
+def _strip_first_center_env(tex: str) -> str:
+    """Xoá khối \\begin{center}...\\end{center} đầu tiên (tiêu đề từ _title.tex)."""
+    start = tex.find(r"\begin{center}")
+    if start == -1:
+        return tex
+    end = tex.find(r"\end{center}", start)
+    if end == -1:
+        return tex
+    return tex[:start] + tex[end + len(r"\end{center}"):]
 
 
 def strip_enumerate_optional_args(tex: str) -> str:
