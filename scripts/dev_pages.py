@@ -34,6 +34,32 @@ ROOT   = Path(__file__).resolve().parents[1]
 OUT    = ROOT / ".web-dev"
 TITLES = json.loads((ROOT / "scripts" / "chapter-titles.json").read_text(encoding="utf-8"))
 
+CHAPTER_ORDER = ["C1", "C2", "C3", "C4", "C5", "C6"]
+
+
+def _chapter_pager_html(ch: str) -> str:
+    idx     = CHAPTER_ORDER.index(ch) if ch in CHAPTER_ORDER else -1
+    prev_ch = CHAPTER_ORDER[idx - 1] if idx > 0 else None
+    next_ch = CHAPTER_ORDER[idx + 1] if idx < len(CHAPTER_ORDER) - 1 else None
+
+    def _btn(cid: str, direction: str) -> str:
+        num   = cid[1:].zfill(2)
+        label = "← Chương trước" if direction == "prev" else "Chương tiếp →"
+        css   = f"chapter-pager__{direction}"
+        title = _html.escape(TITLES.get(cid, cid))
+        return (
+            f'<a class="{css}" href="{cid.lower()}.html">'
+            f'<span class="chapter-pager__dir">{label}</span>'
+            f'<span class="chapter-pager__title">Chương {num} · {title}</span>'
+            f'</a>'
+        )
+
+    parts = [
+        _btn(prev_ch, "prev") if prev_ch else "<span></span>",
+        _btn(next_ch, "next") if next_ch else "<span></span>",
+    ]
+    return '<nav class="chapter-pager" aria-label="Điều hướng chương">' + "".join(parts) + "</nav>"
+
 # ── Trang nhúng PDF ──────────────────────────────────────────────────────────
 
 _PDF_EMBED_TMPL = textwrap.dedent("""\
@@ -97,6 +123,7 @@ _PDF_EMBED_TMPL = textwrap.dedent("""\
         <p><a href="{pdf}" target="_blank">Mở PDF trong tab mới →</a></p>
       </div>
     </div>
+    {pager}
     <footer class="chapter-footer" style="margin-top:1.5rem">
       <a href="../index.html">Danh sách chương</a>
       <span class="chapter-footer__sep">·</span>
@@ -117,6 +144,7 @@ def _make_pdf_embed_page(ch: str) -> str:
         label=_html.escape(label),
         title=_html.escape(title),
         pdf=f"{low}.pdf",
+        pager=_chapter_pager_html(ch),
     )
 
 

@@ -18,6 +18,32 @@ TITLES_PATH = ROOT / "scripts" / "chapter-titles.json"
 TEMPLATE_PATH = ROOT / "assets" / "chapter-template.html"
 OUT_DIR = ROOT / ".ci-html"
 
+CHAPTER_ORDER = ["C1", "C2", "C3", "C4", "C5", "C6"]
+
+
+def _chapter_pager_html(ch: str, titles: dict) -> str:
+    """Sinh HTML khối prev/next để thay __CHAPTER_PAGER__."""
+    idx = CHAPTER_ORDER.index(ch) if ch in CHAPTER_ORDER else -1
+    prev_ch = CHAPTER_ORDER[idx - 1] if idx > 0 else None
+    next_ch = CHAPTER_ORDER[idx + 1] if idx < len(CHAPTER_ORDER) - 1 else None
+
+    def _btn(cid: str, direction: str) -> str:
+        num   = cid[1:].zfill(2)
+        label = "← Chương trước" if direction == "prev" else "Chương tiếp →"
+        css   = f"chapter-pager__{direction}"
+        title = _escape_html(titles.get(cid, cid))
+        return (
+            f'<a class="{css}" href="{cid.lower()}.html">'
+            f'<span class="chapter-pager__dir">{label}</span>'
+            f'<span class="chapter-pager__title">Chương {num} · {title}</span>'
+            f'</a>'
+        )
+
+    parts = []
+    parts.append(_btn(prev_ch, "prev") if prev_ch else '<span></span>')
+    parts.append(_btn(next_ch, "next") if next_ch else '<span></span>')
+    return '<nav class="chapter-pager" aria-label="Điều hướng chương">' + "".join(parts) + "</nav>"
+
 
 def extract_document_body(flat_tex: str) -> str:
     m = re.search(r"\\begin\{document\}(.*)\\end\{document\}", flat_tex, re.DOTALL)
@@ -138,14 +164,14 @@ def run_pandoc(body_tex: str) -> tuple[str | None, str]:
         in_path.unlink(missing_ok=True)
 
 
-def write_stub(out_html: Path, ch: str, title: str, message: str) -> None:
+def write_stub(out_html: Path, ch: str, title: str, message: str, titles: dict | None = None) -> None:
     slug = ch.lower()
     tpl = TEMPLATE_PATH.read_text(encoding="utf-8")
     stub = (
         f'<p class="stub-note">{_escape_html(message)}</p>'
         f'<p class="stub-links"><a href="{slug}.pdf">Mở bản PDF</a></p>'
     )
-    html = _fill_template(tpl, ch, title, slug, stub)
+    html = _fill_template(tpl, ch, title, slug, stub, titles=titles)
     out_html.write_text(html, encoding="utf-8")
 
 
@@ -159,15 +185,17 @@ def _escape_html(s: str) -> str:
 
 
 def _fill_template(
-    tpl: str, ch: str, title: str, slug: str, body: str
+    tpl: str, ch: str, title: str, slug: str, body: str, titles: dict | None = None
 ) -> str:
     num = ch[1:].zfill(2)
+    pager = _chapter_pager_html(ch, titles or {}) if titles is not None else ""
     return (
         tpl.replace("__CHAPTER_LABEL__", f"Chương {num}")
         .replace("__TITLE__", title)
         .replace("__BODY__", body)
         .replace("__PDF_HREF__", f"{slug}.pdf")
         .replace("__CHAPTER_SLUG__", slug)
+        .replace("__CHAPTER_PAGER__", pager)
     )
 
 
@@ -184,7 +212,7 @@ def main() -> int:
     title = titles.get(ch, ch)
 
     if not (tex_dir / "main.tex").is_file():
-        write_stub(out_html, ch, title, "Không tìm thấy main.tex.")
+        write_stub(out_html, ch, title, "Không tìm thấy main.tex.", titles=titles)
         return 1
 
     try:
@@ -193,24 +221,24 @@ def main() -> int:
         msg = "Không chạy được latexpand (cần texlive-extra-utils)."
         if isinstance(exc, subprocess.CalledProcessError) and exc.stderr:
             msg = exc.stderr.strip()[:800]
-        write_stub(out_html, ch, title, msg)
+        write_stub(out_html, ch, title, msg, titles=titles)
         return 1
 
     try:
         raw_body = extract_document_body(flat)
     except ValueError as exc:
-        write_stub(out_html, ch, title, str(exc))
+        write_stub(out_html, ch, title, str(exc), titles=titles)
         return 1
 
     body_tex = sanitize_body(raw_body)
     fragment, pandoc_err = run_pandoc(body_tex)
     if fragment is None:
-        write_stub(out_html, ch, title, f"Chuyển HTML thất bại: {pandoc_err}")
+        write_stub(out_html, ch, title, f"Chuyển HTML thất bại: {pandoc_err}", titles=titles)
         return 1
 
     tpl = TEMPLATE_PATH.read_text(encoding="utf-8")
     slug = ch.lower()
-    html = _fill_template(tpl, ch, title, slug, fragment)
+    html = _fill_template(tpl, ch, title, slug, fragment, titles=titles)
     out_html.write_text(html, encoding="utf-8")
     return 0
 
