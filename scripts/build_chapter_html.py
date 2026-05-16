@@ -29,19 +29,24 @@ def _chapter_pager_html(ch: str, titles: dict) -> str:
 
     def _btn(cid: str, direction: str) -> str:
         num   = cid[1:].zfill(2)
-        label = "← Chương trước" if direction == "prev" else "Chương tiếp →"
-        css   = f"chapter-pager__{direction}"
+        lbl   = "Chương trước" if direction == "prev" else "Chương tiếp"
+        arrow = "←" if direction == "prev" else "→"
         title = _escape_html(titles.get(cid, cid))
+        css   = f"chapter-pager__btn chapter-pager__btn--{direction}"
         return (
             f'<a class="{css}" href="{cid.lower()}.html">'
-            f'<span class="chapter-pager__dir">{label}</span>'
-            f'<span class="chapter-pager__title">Chương {num} · {title}</span>'
+            f'<span class="chapter-pager__arrow" aria-hidden="true">{arrow}</span>'
+            f'<span class="chapter-pager__info">'
+            f'<span class="chapter-pager__dir">{lbl}</span>'
+            f'<span class="chapter-pager__num">Chương {num}</span>'
+            f'<span class="chapter-pager__title">{title}</span>'
+            f'</span>'
             f'</a>'
         )
 
     parts = []
-    parts.append(_btn(prev_ch, "prev") if prev_ch else '<span></span>')
-    parts.append(_btn(next_ch, "next") if next_ch else '<span></span>')
+    parts.append(_btn(prev_ch, "prev") if prev_ch else "")
+    parts.append(_btn(next_ch, "next") if next_ch else "")
     return '<nav class="chapter-pager" aria-label="Điều hướng chương">' + "".join(parts) + "</nav>"
 
 

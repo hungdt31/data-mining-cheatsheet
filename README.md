@@ -2,55 +2,97 @@
 
 Tổng hợp kiến thức, câu hỏi tự luận (20 câu) và trắc nghiệm (40 câu) theo từng chương môn **Khai Phá Dữ Liệu** – ĐH Bách Khoa TP.HCM.
 
-## 📄 Tài liệu PDF
+**GitHub Pages:** https://hungdt31.github.io/data-mining-cheatsheet/
 
-Sau mỗi lần push lên `main`, GitHub Actions tự động biên dịch LaTeX và công bố PDF lên GitHub Pages:
+---
 
-| Chương | Chủ đề | PDF |
-|--------|--------|-----|
-| C1 | Giới thiệu về Khai Phá Dữ Liệu | [c1.pdf][c1] |
-| C2 | Tiền Xử Lý Dữ Liệu | [c2.pdf][c2] |
-| C3 | Phân Lớp Dữ Liệu (Classification) | [c3.pdf][c3] |
-| C4 | Hồi Quy và Dự Đoán (Regression) | [c4.pdf][c4] |
-| C5 | Phân Cụm Dữ Liệu (Clustering) | [c5.pdf][c5] |
-| C6 | Luật Kết Hợp và Thuật Toán Apriori | [c6.pdf][c6] |
+## Các chương
 
-> Thay `<your-github-username>` và `<repo-name>` bằng thông tin thực của bạn.
+| Chương | Chủ đề | Web | PDF |
+|--------|--------|-----|-----|
+| C1 | Giới thiệu về Khai Phá Dữ Liệu | [Xem][c1-web] | [PDF][c1-pdf] |
+| C2 | Tiền Xử Lý Dữ Liệu | [Xem][c2-web] | [PDF][c2-pdf] |
+| C3 | Hồi Quy và Dự Đoán (Regression) | [Xem][c3-web] | [PDF][c3-pdf] |
+| C4 | Phân Lớp Dữ Liệu (Classification) | [Xem][c4-web] | [PDF][c4-pdf] |
+| C5 | Phân Cụm Dữ Liệu (Clustering) | [Xem][c5-web] | [PDF][c5-pdf] |
+| C6 | Luật Kết Hợp và Thuật Toán Apriori | [Xem][c6-web] | [PDF][c6-pdf] |
 
-[c1]: https://<your-github-username>.github.io/<repo-name>/chapters/c1.pdf
-[c2]: https://<your-github-username>.github.io/<repo-name>/chapters/c2.pdf
-[c3]: https://<your-github-username>.github.io/<repo-name>/chapters/c3.pdf
-[c4]: https://<your-github-username>.github.io/<repo-name>/chapters/c4.pdf
-[c5]: https://<your-github-username>.github.io/<repo-name>/chapters/c5.pdf
-[c6]: https://<your-github-username>.github.io/<repo-name>/chapters/c6.pdf
+[c1-web]: https://hungdt31.github.io/data-mining-cheatsheet/chapters/c1.html
+[c2-web]: https://hungdt31.github.io/data-mining-cheatsheet/chapters/c2.html
+[c3-web]: https://hungdt31.github.io/data-mining-cheatsheet/chapters/c3.html
+[c4-web]: https://hungdt31.github.io/data-mining-cheatsheet/chapters/c4.html
+[c5-web]: https://hungdt31.github.io/data-mining-cheatsheet/chapters/c5.html
+[c6-web]: https://hungdt31.github.io/data-mining-cheatsheet/chapters/c6.html
 
-## 🗂️ Cấu trúc thư mục
+[c1-pdf]: https://hungdt31.github.io/data-mining-cheatsheet/chapters/c1.pdf
+[c2-pdf]: https://hungdt31.github.io/data-mining-cheatsheet/chapters/c2.pdf
+[c3-pdf]: https://hungdt31.github.io/data-mining-cheatsheet/chapters/c3.pdf
+[c4-pdf]: https://hungdt31.github.io/data-mining-cheatsheet/chapters/c4.pdf
+[c5-pdf]: https://hungdt31.github.io/data-mining-cheatsheet/chapters/c5.pdf
+[c6-pdf]: https://hungdt31.github.io/data-mining-cheatsheet/chapters/c6.pdf
+
+---
+
+## Cấu trúc repo
 
 ```
 .
-├── .github/
-│   └── workflows/
-│       └── build.yml          # CI/CD: compile LaTeX → deploy GitHub Pages
+├── .github/workflows/build.yml   # CI: LaTeX → PDF + HTML → GitHub Pages
 ├── chapters/
-│   ├── _preamble.tex          # Shared: tất cả \usepackage & cấu hình
-│   ├── _title.tex             # Shared: block tiêu đề (dùng \ChapterNum, \ChapterTitle)
-│   ├── jasa_harvard.sty       # Bibliography style
-│   ├── C1/main.tex
-│   ├── C2/main.tex
-│   ├── C3/main.tex
-│   ├── C4/main.tex
-│   ├── C5/main.tex            # ✅ Đầy đủ nội dung – Clustering
-│   └── C6/main.tex            # ✅ Đầy đủ nội dung – Association Rules
-└── slide/                     # Slide gốc của giảng viên (PDF)
+│   ├── _preamble.tex             # Shared packages & cấu hình
+│   ├── _title.tex                # Block tiêu đề dùng chung
+│   ├── C1/main.tex  …  C6/main.tex
+├── assets/
+│   ├── chapter-template.html     # Template trang web từng chương
+│   └── chapters.css              # CSS editorial (responsive)
+├── scripts/
+│   ├── build_chapter_html.py     # LaTeX → HTML (cần pandoc + latexpand)
+│   ├── render_index.py           # Sinh index.html cho CI
+│   ├── dev_pages.py              # Server xem trước cục bộ
+│   └── chapter-titles.json       # Tiêu đề từng chương
+└── index.html                    # Trang mục lục (template, CI thay placeholder)
 ```
 
-## ✍️ Thêm nội dung cho chương mới
+---
 
-Mỗi `CX/main.tex` chỉ cần:
+## Xem trước cục bộ (dev)
+
+Không cần cài thêm gì ngoài Python 3.10+:
+
+```bash
+python scripts/dev_pages.py
+# → http://127.0.0.1:8765/
+```
+
+Mỗi chương có nút **«Trên web»** (nhúng PDF trực tiếp) và **«PDF»**. Dừng bằng Ctrl+C.
+
+Tùy chọn:
+
+```bash
+python scripts/dev_pages.py --port 3000   # đổi cổng
+python scripts/dev_pages.py --build-only  # chỉ tạo .web-dev/, không bật server
+python scripts/dev_pages.py --no-open     # không tự mở trình duyệt
+```
+
+### Sinh HTML đầy đủ từ LaTeX (tùy chọn)
+
+Cần **pandoc** và **latexpand** (gói `texlive-extra-utils`):
+
+```bash
+python scripts/build_chapter_html.py C5
+# lặp C1..C6, sau đó rebuild dev:
+python scripts/dev_pages.py --build-only
+```
+
+---
+
+## Thêm / sửa nội dung chương
+
+Mỗi `chapters/CX/main.tex` theo cấu trúc:
 
 ```latex
 \documentclass[10pt]{article}
-\input{../_preamble}           % kéo toàn bộ packages
+\input{../_preamble}
 
 \begin{document}
 \onehalfspacing
@@ -60,31 +102,30 @@ Mỗi `CX/main.tex` chỉ cần:
 \newcommand{\ChapterTitle}{TÊN CHƯƠNG}
 \input{../_title}
 
-% --- Nội dung kiến thức ---
-% --- Câu hỏi tự luận ---
-% --- Câu hỏi trắc nghiệm ---
-% --- Đáp án (trang cuối) ---
+% Nội dung kiến thức
+% Câu hỏi tự luận
+% Câu hỏi trắc nghiệm
+% Đáp án
 
 \end{document}
 ```
 
-Khi push lên `main`, CI/CD tự biên dịch và cập nhật PDF trên GitHub Pages.
+Push lên `main` → CI tự biên dịch, sinh HTML và deploy lên GitHub Pages.
 
-## ⚙️ Cài đặt GitHub Pages
+---
 
-1. Vào **Settings → Pages** của repo (tab **Pages** bên trái).
-2. Mục **Build and deployment**:
-   - **Source** phải là **GitHub Actions** (không chọn “Deploy from a branch” nếu bạn dùng workflow `deploy-pages`).
-3. Push lên `main` (hoặc chạy workflow thủ công: **Actions → Build & Publish… → Run workflow**).
+## Cài đặt GitHub Pages (lần đầu)
 
-### Nếu job “Setup GitHub Pages” báo `Not Found` / Get Pages site failed
+1. **Settings → Pages → Source = GitHub Actions** (không chọn "Deploy from a branch").
+2. Push lên `main` hoặc chạy thủ công: **Actions → Build & Publish LaTeX PDFs → Run workflow**.
 
-- Nguyên nhân: repo chưa có **GitHub Pages** hoặc nguồn chưa phải **GitHub Actions** → API `GET /repos/.../pages` trả 404.
-- **Cách 1 (khuyên dùng):** Settings → Pages → Source = **GitHub Actions**, lưu rồi chạy lại workflow.
-- **Cách 2:** Workflow đã có `enablement: true` trong bước `configure-pages` để thử bật Pages qua API; cần quyền `pages: write` (file workflow đã cấu hình).
-- Repo **private** trên tài khoản miễn phí: GitHub có thể **không** cấp GitHub Pages—cần public repo hoặc gói hỗ trợ Pages cho private.
+**Lỗi `Not Found` ở bước "Setup GitHub Pages":**
+- Chưa bật Pages hoặc nguồn chưa đúng → làm bước 1.
+- Repo private trên tài khoản miễn phí: GitHub Pages yêu cầu repo public hoặc gói trả phí.
 
-## 📚 Tài liệu tham khảo
+---
+
+## Tài liệu tham khảo
 
 - Jiawei Han, Micheline Kamber, Jian Pei – *Data Mining: Concepts and Techniques*, 3rd Ed.
 - David Hand, Heikki Mannila, Padhraic Smyth – *Principles of Data Mining*
